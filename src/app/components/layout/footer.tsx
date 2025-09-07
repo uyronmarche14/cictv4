@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Twitter, Linkedin, Facebook, Instagram } from "lucide-react";
 import Logo from "@/app/lib/CICT.png";
+import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 
 const navigationLinks = [
   { title: "Features", href: "#" },
@@ -43,10 +44,10 @@ export default function FooterSection() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="py-16 md:py-32 bg-background border-t border-border">
-      <div className="container mx-auto max-w-7xl px-6">
+    <footer className="bg-background border-border border-t py-16 md:py-32">
+      <MaxWidthWrapper>
         {/* Logo */}
-        <div className="flex justify-center mb-8">
+        <div className="mb-8 flex justify-center">
           <Image
             src={Logo}
             alt="CICT Logo"
@@ -64,7 +65,7 @@ export default function FooterSection() {
               <li key={link.title}>
                 <Link
                   href={link.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground text-sm transition-colors duration-200"
                 >
                   {link.title}
                 </Link>
@@ -85,7 +86,7 @@ export default function FooterSection() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={social.label}
-                    className="text-muted-foreground hover:text-foreground transition-colors duration-200 p-2 rounded-md hover:bg-muted/50"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md p-2 transition-colors duration-200"
                   >
                     <IconComponent size={20} strokeWidth={1.5} />
                   </Link>
@@ -97,11 +98,11 @@ export default function FooterSection() {
 
         {/* Copyright */}
         <div className="text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             © {currentYear} Tailark. All rights reserved.
           </p>
         </div>
-      </div>
+      </MaxWidthWrapper>
     </footer>
   );
 }

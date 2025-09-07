@@ -1,71 +1,136 @@
 "use client";
 
 import React from "react";
-import { lazy } from "react";
 import Navbar from "@/app/components/layout/navbar";
 import { CleanGridBackground } from "../ripplebg";
+import {
+  createLazyComponent,
+  IntersectionLazy,
+} from "@/app/lib/utils/lazy-loading";
+import {
+  HeroSectionFallback,
+  FeaturesSectionFallback,
+  NewsSectionFallback,
+  FAQSectionFallback,
+  TestimonialSectionFallback,
+  CTASectionFallback,
+  StorySectionFallback,
+} from "@/app/components/ui/section-fallbacks";
+import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 
-const HeroSection = lazy(
-  () => import("@/app/components/sections/landingpage/heroSection")
+// Create lazy components with specific fallbacks
+const HeroSection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/heroSection"),
+  { fallback: HeroSectionFallback }
 );
 
-const CICTSection = lazy(
-  () => import("@/app/components/sections/landingpage/CICT-Section")
+const CICTSection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/CICT-Section"),
+  { fallback: FeaturesSectionFallback }
 );
 
-const NewsSection = lazy(
-  () => import("@/app/components/sections/landingpage/newsSection")
+const NewsSection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/newsSection"),
+  { fallback: NewsSectionFallback }
 );
 
-const FAQsSection = lazy(
-  () => import("@/app/components/sections/landingpage/faqsSection")
+const FAQsSection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/faqsSection"),
+  { fallback: FAQSectionFallback }
 );
 
-const OfferSection = lazy(
-  () => import("@/app/components/sections/landingpage/offerSection")
+const OfferSection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/offerSection"),
+  { fallback: FeaturesSectionFallback }
 );
 
-const StorySection = lazy(
-  () => import("@/app/components/sections/landingpage/storySection")
+const StorySection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/storySection"),
+  { fallback: StorySectionFallback }
 );
 
-const TestimonialSeciton = lazy(
-  () => import("@/app/components/sections/landingpage/Testimonial")
+const TestimonialSection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/Testimonial"),
+  { fallback: TestimonialSectionFallback }
 );
 
-const CTASection = lazy(
-  () => import("@/app/components/sections/landingpage/CTASection")
+const CTASection = createLazyComponent(
+  () => import("@/app/components/sections/landingpage/CTASection"),
+  { fallback: CTASectionFallback }
 );
 
-const FooterSection = lazy(() => import("@/app/components/layout/footer"));
+const FooterSection = createLazyComponent(
+  () => import("@/app/components/layout/footer")
+);
 interface OptimizedLayoutProps {
   children?: React.ReactNode;
 }
 
-
-
 const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
   return (
-    <div className="min-h-screen bg-background dark:bg-background">
-     <CleanGridBackground 
+    <div className="bg-background dark:bg-background min-h-screen">
+      <CleanGridBackground
         rows={100}
         cols={100}
         cellSize={20}
         opacity={0.03}
         borderOpacity={0.8}
+        aria-hidden="true"
       />
       <Navbar />
-      <main className="relative">
-        <HeroSection />
-        <CICTSection />
-        <StorySection />
-        <OfferSection />
-        <NewsSection />
-        <FAQsSection />
-        
-        <TestimonialSeciton />
-        <CTASection />
-        <FooterSection />
+      <main id="main-content" className="relative" role="main">
+        {/* Hero section loads immediately for LCP */}
+        <section aria-labelledby="hero-heading">
+          <HeroSection />
+        </section>
+
+        {/* Below-the-fold sections use intersection-based lazy loading */}
+        <IntersectionLazy>
+          <section aria-labelledby="about-heading">
+            <CICTSection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <section aria-labelledby="story-heading">
+            <StorySection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <section aria-labelledby="programs-heading">
+            <OfferSection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <section aria-labelledby="news-heading">
+            <NewsSection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <section aria-labelledby="faq-heading">
+            <FAQsSection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <section aria-labelledby="testimonials-heading">
+            <TestimonialSection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <section aria-labelledby="cta-heading">
+            <CTASection />
+          </section>
+        </IntersectionLazy>
+
+        <IntersectionLazy>
+          <FooterSection />
+        </IntersectionLazy>
+
         <div className="relative z-10">{children}</div>
       </main>
     </div>

@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Target, Eye, Brain } from "lucide-react";
 import Image from "next/image";
 import logo from "@/app/lib/CICT.png";
+import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 
 const features = [
   {
@@ -27,20 +28,20 @@ const features = [
 
 const StreamlineSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center py-16 px-4">
-      <div className="max-w-7xl mx-auto">
+    <section className="relative flex min-h-screen items-center justify-center py-16">
+      <MaxWidthWrapper>
         {/* Header Section */}
-        <div className="flex flex-col lg:flex-row items-center justify-between mb-16 gap-12">
-          <div className="lg:w-1/2 space-y-4">
-            <p className="text-sm text-primary font-medium tracking-wider uppercase">
+        <div className="mb-16 flex flex-col items-center justify-between gap-12 lg:flex-row">
+          <div className="space-y-4 lg:w-full">
+            <p className="text-primary text-sm font-medium tracking-wider uppercase">
               What is CICT?
             </p>
-            <h2 className="text-4xl lg:text-5xl font-bold text-primary leading-tight">
+            <h2 className="text-primary text-4xl leading-tight font-bold lg:text-5xl">
               COLLEGE OF INFORMATION AND
               <br />
               COMMUNICATION TECHNOLOGY
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
+            <p className="text-muted-foreground max-w-md text-lg leading-relaxed">
               Streamline optimizes your workflow from start to finish. It
               gathers information, generates reports, automates tasks, and
               delivers results—all in one seamless system.
@@ -48,8 +49,8 @@ const StreamlineSection = () => {
           </div>
 
           {/* Logo/Icon */}
-          <div className="lg:w-1/2 flex justify-center lg:justify-end">
-            <div className="relative w-48 h-48">
+          <div className="flex justify-center lg:w-1/2 lg:justify-end">
+            <div className="relative h-48 w-48">
               <Image
                 src={logo}
                 alt="CICT Logo"
@@ -63,20 +64,20 @@ const StreamlineSection = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid gap-8 md:grid-cols-3">
           {features.map((feature, index) => (
             <Card
               key={index}
-              className="group relative border border-border bg-card hover:bg-card/95 shadow-sm hover:shadow-md transition-all duration-300 rounded-lg overflow-hidden shadow-md shadow-primary hover:shadow-xl hover:shadow-primary"
+              className="group border-border bg-card hover:bg-card/95 shadow-primary hover:shadow-primary relative overflow-hidden rounded-lg border shadow-md shadow-sm transition-all duration-300 hover:shadow-md hover:shadow-xl"
             >
               {/* Accent border */}
-              <div className="absolute inset-x-0 top-0 h-1 bg-primary transform origin-left transition-transform duration-300 group-hover:scale-x-100 scale-x-0" />
+              <div className="bg-primary absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transform transition-transform duration-300 group-hover:scale-x-100" />
 
               <CardContent className="relative p-6">
-                <div className="w-12 h-12 bg-primary/10 rounded-md flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors duration-300">
-                  <feature.icon className="w-6 h-6 text-primary" />
+                <div className="bg-primary/10 group-hover:bg-primary/20 mb-5 flex h-12 w-12 items-center justify-center rounded-md transition-colors duration-300">
+                  <feature.icon className="text-primary h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
+                <h3 className="text-foreground group-hover:text-primary mb-3 text-xl font-semibold transition-colors duration-300">
                   {feature.title}
                 </h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -86,8 +87,7 @@ const StreamlineSection = () => {
             </Card>
           ))}
         </div>
-        
-      </div>
+      </MaxWidthWrapper>
     </section>
   );
 };

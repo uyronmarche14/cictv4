@@ -1,42 +1,43 @@
-"use client"
-import { Card } from '@/app/components/ui/card';
+"use client";
+import { Card } from "@/app/components/ui/card";
 
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { CheckCircle2, Sparkles, Target, Zap } from 'lucide-react';
-import { CldImage } from 'next-cloudinary';
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
+import { CheckCircle2, Sparkles, Target, Zap } from "lucide-react";
+import { LazyCldImage } from "@/app/components/ui/lazy-cloudinary";
 
 function Story2() {
   const features = [
     {
       icon: <Sparkles className="h-5 w-5" />,
-      title: 'AI-Powered Mapping',
-      description: 'Generate comprehensive sitemaps with intelligent AI analysis',
+      title: "AI-Powered Mapping",
+      description:
+        "Generate comprehensive sitemaps with intelligent AI analysis",
     },
     {
       icon: <Target className="h-5 w-5" />,
-      title: 'Strategic Planning',
-      description: 'Scope projects better with clear content architecture',
+      title: "Strategic Planning",
+      description: "Scope projects better with clear content architecture",
     },
     {
       icon: <Zap className="h-5 w-5" />,
-      title: 'Instant Results',
-      description: 'Create complete sitemaps in seconds, not hours',
+      title: "Instant Results",
+      description: "Create complete sitemaps in seconds, not hours",
     },
     {
       icon: <CheckCircle2 className="h-5 w-5" />,
-      title: 'Clear Structure',
-      description: 'Identify key pages and sections with precision',
+      title: "Clear Structure",
+      description: "Identify key pages and sections with precision",
     },
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+    <div className="mx-auto w-full max-w-7xl">
+      <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
         {/* LEFT: Image */}
-        <div className="relative aspect-square lg:aspect-[4/3] rounded-xl overflow-hidden order-2 lg:order-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
-          <CldImage
+        <div className="relative h-full min-h-[500px] w-full overflow-hidden rounded-xl">
+          <div className="from-primary/5 absolute inset-0 bg-gradient-to-br to-transparent" />
+          <LazyCldImage
             src="https://res.cloudinary.com/ddnxfpziq/image/upload/v1756660320/cict4_qqksfh.jpg"
             alt="AI-powered sitemap generation dashboard"
             fill
@@ -46,21 +47,23 @@ function Story2() {
         </div>
 
         {/* RIGHT: Content */}
-        <div className="space-y-6 order-1 lg:order-2">
+        <div className="order-1 space-y-6 lg:order-2">
           <div className="space-y-4">
             <Badge
               variant="secondary"
-              className="w-fit bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+              className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 w-fit"
             >
               Advanced Features
             </Badge>
 
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-foreground">
+            <h2 className="text-foreground text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
               Powerful tools for modern teams
             </h2>
 
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              From concept to completion, our platform provides everything you need to build, manage, and scale your digital presence with confidence.
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              From concept to completion, our platform provides everything you
+              need to build, manage, and scale your digital presence with
+              confidence.
             </p>
           </div>
 
@@ -68,16 +71,16 @@ function Story2() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="flex items-start gap-4 py-3 rounded-lg hover:bg-muted/20 transition-colors duration-200"
+                className="hover:bg-muted/20 flex items-start gap-4 rounded-lg py-3 transition-colors duration-200"
               >
-                <div className="flex-shrink-0 p-2 bg-primary/10 text-primary rounded-lg">
+                <div className="bg-primary/10 text-primary flex-shrink-0 rounded-lg p-2">
                   {feature.icon}
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-foreground">
+                  <h3 className="text-foreground font-semibold">
                     {feature.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {feature.description}
                   </p>
                 </div>
@@ -88,7 +91,7 @@ function Story2() {
           <div>
             <Button
               size="lg"
-              className="rounded-full px-8 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+              className="bg-primary hover:bg-primary/90 shadow-primary/20 rounded-full px-8 shadow-lg"
             >
               Explore Features
             </Button>
@@ -99,4 +102,4 @@ function Story2() {
   );
 }
 
-export default Story2
+export default Story2;

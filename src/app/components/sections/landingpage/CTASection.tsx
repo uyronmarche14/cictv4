@@ -1,13 +1,17 @@
-'use client';
+"use client";
 
-import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
-import { ArrowRight } from 'lucide-react';
+import { Button } from "@/app/components/ui/button";
+import { Badge } from "@/app/components/ui/badge";
+import { ArrowRight } from "lucide-react";
+import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 
 export default function StrongTeamsCTA() {
   return (
-    <section className="w-full bg-background py-20">
-      <div className="container mx-auto flex max-w-5xl flex-col items-center space-y-6 px-6 text-center">
+    <section className="bg-background w-full py-20">
+      <MaxWidthWrapper
+        maxWidth="5xl"
+        className="flex flex-col items-center space-y-6 text-center"
+      >
         {/* Heading */}
         <h2 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
           Where <span className="text-primary">Strong teams</span> start
@@ -23,7 +27,7 @@ export default function StrongTeamsCTA() {
         {/* CTA Button */}
         <Button
           size="lg"
-          className="group rounded-full px-8 py-3 text-base font-semibold shadow-lg shadow-primary/25"
+          className="group shadow-primary/25 rounded-full px-8 py-3 text-base font-semibold shadow-lg"
         >
           <span className="flex items-center gap-2">
             Get Started Now
@@ -38,7 +42,7 @@ export default function StrongTeamsCTA() {
         >
           ✨ No Signup Required · Enjoy!
         </Badge>
-      </div>
+      </MaxWidthWrapper>
     </section>
   );
 }
