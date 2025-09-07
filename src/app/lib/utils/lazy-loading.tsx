@@ -28,7 +28,7 @@ export function createLazyComponent<T extends ComponentType<any>>(
 
   const WrappedComponent = (props: React.ComponentProps<T>) => {
     // Monitor lazy loading performance in development
-    useLazyLoadingPerformance(LazyComponent.displayName || "LazyComponent");
+    useLazyLoadingPerformance("LazyComponent");
 
     const content = (
       <Suspense fallback={<FallbackComponent />}>
@@ -44,7 +44,7 @@ export function createLazyComponent<T extends ComponentType<any>>(
   };
 
   // Preserve display name for debugging
-  WrappedComponent.displayName = `LazyComponent(${LazyComponent.displayName || "Component"})`;
+  WrappedComponent.displayName = `LazyComponent(Component)`;
 
   return WrappedComponent;
 }
@@ -159,7 +159,7 @@ export function createRouteLazyComponent<T extends ComponentType<any>>(
  * Hook for intersection-based lazy loading
  */
 export function useIntersectionLazyLoad(
-  ref: React.RefObject<Element>,
+  ref: React.RefObject<HTMLElement>,
   options: IntersectionObserverInit = {}
 ) {
   const [isVisible, setIsVisible] = React.useState(false);
