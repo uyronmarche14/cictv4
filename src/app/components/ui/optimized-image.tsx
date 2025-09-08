@@ -38,9 +38,9 @@ interface CloudinaryImageProps extends BaseImageProps {
   height: number;
   fill?: never;
   cloudinary: true;
-  crop?: string;
-  gravity?: string;
-  format?: string;
+  crop?: "fill" | "auto" | "crop" | "fill_pad" | "fit" | "imagga_crop" | "imagga_scale" | "lfill" | "limit" | "lpad" | "mfit" | "mpad" | "pad" | "scale" | "thumb";
+  gravity?: "auto" | "center" | "face" | "faces" | "body" | "custom";
+  format?: "auto" | "webp" | "avif" | "jpg" | "png" | "gif";
 }
 
 interface CloudinaryImageFillProps extends BaseImageProps {
@@ -49,9 +49,9 @@ interface CloudinaryImageFillProps extends BaseImageProps {
   height?: never;
   fill: true;
   cloudinary: true;
-  crop?: string;
-  gravity?: string;
-  format?: string;
+  crop?: "fill" | "auto" | "crop" | "fill_pad" | "fit" | "imagga_crop" | "imagga_scale" | "lfill" | "limit" | "lpad" | "mfit" | "mpad" | "pad" | "scale" | "thumb";
+  gravity?: "auto" | "center" | "face" | "faces" | "body" | "custom";
+  format?: "auto" | "webp" | "avif" | "jpg" | "png" | "gif";
 }
 
 type OptimizedImageProps =
@@ -104,17 +104,22 @@ export function OptimizedImage({
   // Render Cloudinary image
   if (props.cloudinary) {
     const cloudinaryProps = {
-      ...commonProps,
       src,
       sizes: defaultSizes,
       crop: props.crop || "fill",
       gravity: props.gravity || "auto",
       format: props.format || "auto",
+      className: commonProps.className,
+      priority: commonProps.priority,
+      loading: commonProps.loading,
+      quality: commonProps.quality,
+      placeholder: commonProps.placeholder,
+      blurDataURL: commonProps.blurDataURL,
     };
 
     if (props.fill) {
       return (
-        <CldImage {...cloudinaryProps} fill style={{ objectFit: "cover" }} />
+        <CldImage {...cloudinaryProps} fill style={{ objectFit: "cover" }} alt={alt} />
       );
     }
 
@@ -123,35 +128,41 @@ export function OptimizedImage({
         {...cloudinaryProps}
         width={props.width}
         height={props.height}
+        alt={alt}
       />
     );
   }
 
   // Render Next.js Image
   const nextImageProps = {
-    ...commonProps,
     src,
     sizes: defaultSizes,
+    className: commonProps.className,
+    priority: commonProps.priority,
+    loading: commonProps.loading,
+    quality: commonProps.quality,
+    placeholder: commonProps.placeholder,
+    blurDataURL: commonProps.blurDataURL,
   };
 
   if (props.fill) {
-    return <Image {...nextImageProps} fill style={{ objectFit: "cover" }} />;
+    return <Image {...nextImageProps} fill style={{ objectFit: "cover" }} alt={alt} />;
   }
 
   return (
-    <Image {...nextImageProps} width={props.width} height={props.height} />
+    <Image {...nextImageProps} width={props.width} height={props.height} alt={alt} />
   );
 }
 
 // Convenience components for common use cases
 export function OptimizedHeroImage(
-  props: Omit<OptimizedImageProps, "priority">,
+  props: NextImageProps | NextImageFillProps | CloudinaryImageProps | CloudinaryImageFillProps,
 ) {
   return <OptimizedImage {...props} priority={true} />;
 }
 
 export function OptimizedLazyImage(
-  props: Omit<OptimizedImageProps, "loading">,
+  props: NextImageProps | NextImageFillProps | CloudinaryImageProps | CloudinaryImageFillProps,
 ) {
   return <OptimizedImage {...props} loading="lazy" />;
 }

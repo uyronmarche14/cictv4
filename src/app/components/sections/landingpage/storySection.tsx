@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { lazy } from "react";
 import { Header } from "@/app/components/headerTitleDes";
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";

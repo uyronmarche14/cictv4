@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Target,
   Eye,
@@ -18,7 +19,7 @@ import {
   Linkedin,
   Facebook,
   Instagram,
-  LucideIcon,
+  type LucideIcon,
 } from "lucide-react";
 
 // Icon mapping for string-based icon references
@@ -101,5 +102,8 @@ export function renderIcon(
   props?: React.ComponentProps<LucideIcon>
 ): React.ReactElement | null {
   const IconComponent = getIcon(iconName);
-  return IconComponent ? <IconComponent {...props} /> : null;
+  if (!IconComponent) {
+    return null;
+  }
+  return React.createElement(IconComponent, props);
 }

@@ -22,11 +22,14 @@ export const CleanGridBackground = ({
         {Array.from({ length: rows * cols }, (_, idx) => (
           <div
             key={idx}
-            className="border border-black/20 dark:border-white/20"
             style={{
               backgroundColor: 'transparent',
               width: cellSize,
               height: cellSize,
+              border: `1px solid ${borderOpacity >= 0.5 ? 
+                `rgba(0, 0, 0, ${borderOpacity})` : 
+                `rgba(255, 255, 255, ${borderOpacity})`}`,
+              opacity
             }}
           />
         ))}

@@ -1,6 +1,4 @@
 import React from "react";
-import { Button } from "@/app/components/ui/button";
-import { Card, CardContent } from "@/app/components/ui/card";
 import {
   Code,
   Brain,
@@ -15,6 +13,8 @@ import {
   ShoppingCart,
   Lightbulb,
 } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 import { Header } from "@/app/components/headerTitleDes";
 
@@ -89,8 +89,8 @@ export default function OfferSection() {
               Our comprehensive BSCS program equips you with the skills to excel
               in software development, artificial intelligence, and
               computational problem-solving. From fundamental algorithms to
-              advanced machine learning applications, you'll be prepared for the
-              tech industry's most challenging roles.
+              advanced machine learning applications, you&apos;ll be prepared for the
+              tech industry&apos;s most challenging roles.
             </p>
           </div>
 

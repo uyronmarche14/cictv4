@@ -78,61 +78,61 @@ export function useKeyboardNavigation(
       }
 
       // Handle arrow key navigation
-      if (
-        enableArrowKeys &&
-        [
+      if (enableArrowKeys) {
+        const arrowKeys = [
           KEYBOARD_KEYS.ARROW_UP,
           KEYBOARD_KEYS.ARROW_DOWN,
           KEYBOARD_KEYS.ARROW_LEFT,
           KEYBOARD_KEYS.ARROW_RIGHT,
-        ].includes(key)
-      ) {
-        event.preventDefault();
+        ];
+        if (arrowKeys.includes(key as any)) {
+          event.preventDefault();
 
-        let nextElement: HTMLElement | null = null;
+          let nextElement: HTMLElement | null = null;
 
-        switch (key) {
-          case KEYBOARD_KEYS.ARROW_DOWN:
-          case KEYBOARD_KEYS.ARROW_RIGHT:
-            nextElement = focusUtils.getNextFocusable(activeElement, container);
-            break;
-          case KEYBOARD_KEYS.ARROW_UP:
-          case KEYBOARD_KEYS.ARROW_LEFT:
-            nextElement = focusUtils.getPreviousFocusable(
-              activeElement,
-              container
-            );
-            break;
+          switch (key) {
+            case KEYBOARD_KEYS.ARROW_DOWN:
+            case KEYBOARD_KEYS.ARROW_RIGHT:
+              nextElement = focusUtils.getNextFocusable(activeElement, container);
+              break;
+            case KEYBOARD_KEYS.ARROW_UP:
+            case KEYBOARD_KEYS.ARROW_LEFT:
+              nextElement = focusUtils.getPreviousFocusable(
+                activeElement,
+                container
+              );
+              break;
+          }
+
+          if (nextElement) {
+            nextElement.focus();
+          }
+          return;
         }
-
-        if (nextElement) {
-          nextElement.focus();
-        }
-        return;
       }
 
       // Handle home/end key navigation
-      if (
-        enableHomeEnd &&
-        [KEYBOARD_KEYS.HOME, KEYBOARD_KEYS.END].includes(key)
-      ) {
-        event.preventDefault();
+      if (enableHomeEnd) {
+        const homeEndKeys = [KEYBOARD_KEYS.HOME, KEYBOARD_KEYS.END];
+        if (homeEndKeys.includes(key as any)) {
+          event.preventDefault();
 
-        const focusableElements = Array.from(
-          container.querySelectorAll(
-            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-          )
-        ) as HTMLElement[];
+          const focusableElements = Array.from(
+            container.querySelectorAll(
+              'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )
+          ) as HTMLElement[];
 
-        if (focusableElements.length === 0) return;
+          if (focusableElements.length === 0) return;
 
-        const targetElement =
-          key === KEYBOARD_KEYS.HOME
-            ? focusableElements[0]
-            : focusableElements[focusableElements.length - 1];
+          const targetElement =
+            key === KEYBOARD_KEYS.HOME
+              ? focusableElements[0]
+              : focusableElements[focusableElements.length - 1];
 
-        targetElement.focus();
-        return;
+          targetElement.focus();
+          return;
+        }
       }
     },
     [
@@ -149,7 +149,7 @@ export function useKeyboardNavigation(
     const container = containerRef?.current || document;
 
     // Add keyboard event listener
-    container.addEventListener("keydown", handleKeyDown);
+      container.addEventListener("keydown", handleKeyDown as EventListener);
 
     // Setup focus trapping if enabled
     if (trapFocus && containerRef?.current) {
@@ -157,7 +157,7 @@ export function useKeyboardNavigation(
     }
 
     return () => {
-      container.removeEventListener("keydown", handleKeyDown);
+      container.removeEventListener("keydown", handleKeyDown as EventListener);
       if (cleanupRef.current) {
         cleanupRef.current();
         cleanupRef.current = null;
@@ -240,8 +240,9 @@ export function useRovingTabIndex(
 
   const focusItem = useCallback(
     (index: number) => {
-      if (items[index]?.current) {
-        items[index].current!.focus();
+      const currentItem = items[index]?.current;
+      if (currentItem) {
+        currentItem.focus();
         setTabIndex(index);
       }
     },
@@ -257,11 +258,11 @@ export function useRovingTabIndex(
       const isHorizontalKey = [
         KEYBOARD_KEYS.ARROW_LEFT,
         KEYBOARD_KEYS.ARROW_RIGHT,
-      ].includes(key);
+      ].includes(key as any);
       const isVerticalKey = [
         KEYBOARD_KEYS.ARROW_UP,
         KEYBOARD_KEYS.ARROW_DOWN,
-      ].includes(key);
+      ].includes(key as any);
 
       if (
         (orientation === "horizontal" && !isHorizontalKey) ||
@@ -309,8 +310,8 @@ export function useRovingTabIndex(
     const cleanupFunctions = items.map((itemRef) => {
       if (itemRef.current) {
         const element = itemRef.current;
-        element.addEventListener("keydown", handleKeyDown);
-        return () => element.removeEventListener("keydown", handleKeyDown);
+        element.addEventListener("keydown", handleKeyDown as EventListener);
+        return () => element.removeEventListener("keydown", handleKeyDown as EventListener);
       }
       return () => {};
     });

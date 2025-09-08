@@ -1,8 +1,9 @@
-import { Button } from "@/app/components/ui/button";
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-import { CldImage } from "next-cloudinary";
 import React from "react";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { CldImage } from "next-cloudinary";
+
+import { Button } from "@/app/components/ui/button";
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 
 export default function NewsSection() {

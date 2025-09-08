@@ -1,7 +1,8 @@
 import React from "react";
-import { Card, CardContent } from "@/app/components/ui/card";
-import { Target, Eye, Brain } from "lucide-react";
 import Image from "next/image";
+import { Target, Eye, Brain } from "lucide-react";
+
+import { Card, CardContent } from "@/app/components/ui/card";
 import logo from "@/app/lib/CICT.png";
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 

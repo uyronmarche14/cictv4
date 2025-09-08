@@ -14,16 +14,7 @@ export interface WebVitalsMetric {
 /**
  * Report Core Web Vitals to analytics
  */
-export function reportWebVitals(metric: WebVitalsMetric) {
-  // Log to console in development
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[Web Vitals] ${metric.name}:`, {
-      value: metric.value,
-      rating: metric.rating,
-      delta: metric.delta,
-    });
-  }
-
+export function reportWebVitals(_metric: WebVitalsMetric) {
   // In production, you would send this to your analytics service
   // Example: analytics.track('web-vitals', metric);
 }
@@ -75,9 +66,13 @@ export class PerformanceMonitor {
         // Monitor layout shifts
         const clsObserver = new PerformanceObserver((list) => {
           let clsValue = 0;
-          for (const entry of list.getEntries()) {
-            if (!(entry as any).hadRecentInput) {
-              clsValue += (entry as any).value;
+          for (const entry of list.getEntries() as PerformanceEntry[]) {
+            const layoutShiftEntry = entry as PerformanceEntry & {
+              value: number;
+              hadRecentInput: boolean;
+            };
+            if (!layoutShiftEntry.hadRecentInput) {
+              clsValue += layoutShiftEntry.value;
             }
           }
           this.logMetric("CLS", clsValue);
@@ -90,10 +85,8 @@ export class PerformanceMonitor {
     }
   }
 
-  private logMetric(name: string, value: number) {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`[Performance] ${name}: ${Math.round(value)}ms`);
-    }
+  private logMetric(_name: string, _value: number) {
+    // Metrics are handled by external analytics in production
   }
 
   /**
@@ -151,26 +144,20 @@ export function usePerformanceMonitor(componentName: string) {
  */
 export function logBundleInfo() {
   if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
-    // Log initial bundle size information
     const scripts = Array.from(document.querySelectorAll("script[src]"));
     const stylesheets = Array.from(
       document.querySelectorAll('link[rel="stylesheet"]'),
     );
 
-    console.group("[Bundle Info]");
-    console.log(`Scripts loaded: ${scripts.length}`);
-    console.log(`Stylesheets loaded: ${stylesheets.length}`);
-
-    // Log largest scripts
-    const scriptSizes = scripts
-      .map((script) => ({
-        src: (script as HTMLScriptElement).src,
-        // Note: Actual size would need to be fetched or estimated
-      }))
-      .slice(0, 5);
-
-    console.log("Script sources:", scriptSizes);
-    console.groupEnd();
+    console.warn("[Bundle Info]", {
+      scriptsLoaded: scripts.length,
+      stylesheetsLoaded: stylesheets.length,
+      scriptSources: scripts
+        .map((script) => ({
+          src: (script as HTMLScriptElement).src,
+        }))
+        .slice(0, 5),
+    });
   }
 }
 
@@ -179,11 +166,18 @@ export function logBundleInfo() {
  */
 export function logMemoryUsage() {
   if (process.env.NODE_ENV === "development" && "memory" in performance) {
-    const memory = (performance as any).memory;
-    console.log("[Memory Usage]", {
-      used: `${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB`,
-      total: `${Math.round(memory.totalJSHeapSize / 1024 / 1024)}MB`,
-      limit: `${Math.round(memory.jsHeapSizeLimit / 1024 / 1024)}MB`,
+    const memory = performance as Performance & {
+      memory: {
+        usedJSHeapSize: number;
+        totalJSHeapSize: number;
+        jsHeapSizeLimit: number;
+      };
+    };
+    
+    console.warn("[Memory Usage]", {
+      used: `${Math.round(memory.memory.usedJSHeapSize / 1024 / 1024)}MB`,
+      total: `${Math.round(memory.memory.totalJSHeapSize / 1024 / 1024)}MB`,
+      limit: `${Math.round(memory.memory.jsHeapSizeLimit / 1024 / 1024)}MB`,
     });
   }
 }

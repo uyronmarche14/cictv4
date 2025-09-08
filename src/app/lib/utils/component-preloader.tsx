@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ComponentType } from "react";
 import { preloadComponents } from "./lazy-loading";
 
 /**
@@ -13,20 +13,20 @@ export function ComponentPreloader() {
       preloadComponents([
         // Preload Framer Motion for animations
         () =>
-          import("framer-motion").then((mod) => ({ default: mod.motion.div })),
+          import("framer-motion").then((mod) => ({ default: mod.motion.div as ComponentType<unknown> })),
 
         // Preload Cloudinary for images
         () =>
-          import("next-cloudinary").then((mod) => ({ default: mod.CldImage })),
+          import("next-cloudinary").then((mod) => ({ default: mod.CldImage as ComponentType<unknown> })),
 
         // Preload common icons
         () =>
-          import("lucide-react").then((mod) => ({ default: mod.ChevronDown })),
+          import("lucide-react").then((mod) => ({ default: mod.ChevronDown as ComponentType<unknown> })),
 
         // Preload StoryTabs components
-        () => import("@/app/components/StoryTabs/tabs1"),
-        () => import("@/app/components/StoryTabs/tabs2"),
-        () => import("@/app/components/StoryTabs/tabs3"),
+        () => import("@/app/components/StoryTabs/tabs1").then(mod => ({ default: mod.default as ComponentType<unknown> })),
+        () => import("@/app/components/StoryTabs/tabs2").then(mod => ({ default: mod.default as ComponentType<unknown> })),
+        () => import("@/app/components/StoryTabs/tabs3").then(mod => ({ default: mod.default as ComponentType<unknown> })),
       ]);
     }, 2000); // Preload after 2 seconds
 
@@ -37,9 +37,9 @@ export function ComponentPreloader() {
     // Preload on user interaction
     const handleUserInteraction = () => {
       preloadComponents([
-        () => import("@/app/components/sections/landingpage/storySection"),
-        () => import("@/app/components/sections/landingpage/newsSection"),
-        () => import("@/app/components/sections/landingpage/faqsSection"),
+        () => import("@/app/components/sections/landingpage/storySection").then(mod => ({ default: mod.default as ComponentType<unknown> })),
+        () => import("@/app/components/sections/landingpage/newsSection").then(mod => ({ default: mod.default as ComponentType<unknown> })),
+        () => import("@/app/components/sections/landingpage/faqsSection").then(mod => ({ default: mod.default as ComponentType<unknown> })),
       ]);
 
       // Remove listeners after first interaction
@@ -73,7 +73,7 @@ export function ComponentPreloader() {
  */
 export function useConditionalPreload(
   condition: boolean,
-  importFns: Array<() => Promise<{ default: any }>>,
+  importFns: Array<() => Promise<{ default: ComponentType<unknown> }>>,
   delay: number = 0
 ) {
   useEffect(() => {
@@ -91,7 +91,7 @@ export function useConditionalPreload(
  * Hook for viewport-based preloading
  */
 export function useViewportPreload(
-  importFns: Array<() => Promise<{ default: any }>>,
+  importFns: Array<() => Promise<{ default: ComponentType<unknown> }>>,
   threshold: number = 0.1
 ) {
   useEffect(() => {

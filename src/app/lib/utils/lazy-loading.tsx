@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, lazy, ComponentType } from "react";
+import React, { Suspense, lazy, type ComponentType } from "react";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { useLazyLoadingPerformance } from "./performance-monitor";
 
@@ -19,7 +19,7 @@ interface LazyComponentOptions {
 export function createLazyComponent<T extends ComponentType<any>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyComponentOptions = {}
-): React.ComponentType<React.ComponentProps<T>> {
+): T {
   const LazyComponent = lazy(importFn);
   const {
     fallback: FallbackComponent = DefaultFallback,
@@ -46,7 +46,7 @@ export function createLazyComponent<T extends ComponentType<any>>(
   // Preserve display name for debugging
   WrappedComponent.displayName = `LazyComponent(Component)`;
 
-  return WrappedComponent;
+  return WrappedComponent as T;
 }
 
 /**
@@ -96,7 +96,7 @@ class ErrorBoundary extends React.Component<
 /**
  * Preload a lazy component for better performance
  */
-export function preloadComponent<T extends ComponentType<any>>(
+export function preloadComponent<T extends ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>
 ): void {
   // Preload the component in the background
@@ -109,7 +109,7 @@ export function preloadComponent<T extends ComponentType<any>>(
  * Preload multiple components in parallel
  */
 export function preloadComponents(
-  importFns: Array<() => Promise<{ default: ComponentType<any> }>>
+  importFns: Array<() => Promise<{ default: ComponentType<unknown> }>>
 ): void {
   Promise.allSettled(importFns.map((fn) => fn())).then((results) => {
     results.forEach((result, index) => {
@@ -123,7 +123,7 @@ export function preloadComponents(
 /**
  * Create a lazy component with route-based preloading
  */
-export function createRouteLazyComponent<T extends ComponentType<any>>(
+export function createRouteLazyComponent<T extends ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyComponentOptions & { preloadOnRoute?: string } = {}
 ): React.ComponentType<React.ComponentProps<T>> {
@@ -152,14 +152,14 @@ export function createRouteLazyComponent<T extends ComponentType<any>>(
     });
   }
 
-  return LazyComponent;
+  return LazyComponent as React.ComponentType<React.ComponentProps<T>>;
 }
 
 /**
  * Hook for intersection-based lazy loading
  */
 export function useIntersectionLazyLoad(
-  ref: React.RefObject<HTMLElement>,
+  ref: React.RefObject<HTMLElement | null>,
   options: IntersectionObserverInit = {}
 ) {
   const [isVisible, setIsVisible] = React.useState(false);

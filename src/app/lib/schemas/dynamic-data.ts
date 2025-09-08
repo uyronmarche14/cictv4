@@ -17,7 +17,7 @@ export const ProgramSchema = z.object({
   note: z.string().min(1, "Program note is required"),
   buttonText: z.string().min(1, "Button text is required"),
   theme: z.enum(["primary", "accent"], {
-    errorMap: () => ({ message: "Theme must be either 'primary' or 'accent'" }),
+    message: "Theme must be either 'primary' or 'accent'",
   }),
 });
 

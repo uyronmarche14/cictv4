@@ -1,8 +1,7 @@
 import { cn } from "@/app/lib/utils";
 import { Skeleton } from "./skeleton";
 import {
-  SkeletonCard,
-  SkeletonText,
+
   SkeletonAvatar,
   SkeletonButton,
 } from "./skeleton-variants";

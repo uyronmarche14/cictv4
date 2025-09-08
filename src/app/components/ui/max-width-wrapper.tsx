@@ -1,5 +1,5 @@
+import type { ReactNode } from "react";
 import { cn } from "@/app/lib/utils";
-import { ReactNode } from "react";
 
 interface MaxWidthWrapperProps {
   children: ReactNode;

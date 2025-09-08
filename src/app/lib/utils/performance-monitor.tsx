@@ -22,11 +22,9 @@ export function PerformanceMonitor() {
 
             if (size > 100 * 1024) {
               // Log chunks larger than 100KB
-              console.log(
-                `📦 Large JS chunk loaded: ${entry.name.split("/").pop()}`
+              console.warn(
+                `📦 Large JS chunk loaded: ${entry.name.split("/").pop()}\n   Size: ${(size / 1024).toFixed(2)}KB\n   Load time: ${loadTime.toFixed(2)}ms`
               );
-              console.log(`   Size: ${(size / 1024).toFixed(2)}KB`);
-              console.log(`   Load time: ${loadTime.toFixed(2)}ms`);
             }
           }
         });
@@ -44,14 +42,14 @@ export function PerformanceMonitor() {
           switch (entry.entryType) {
             case "paint":
               if (entry.name === "first-contentful-paint") {
-                console.log(`🎨 FCP: ${entry.startTime.toFixed(2)}ms`);
+                console.warn(`🎨 FCP: ${entry.startTime.toFixed(2)}ms`);
               }
               break;
             case "largest-contentful-paint":
-              console.log(`🖼️ LCP: ${entry.startTime.toFixed(2)}ms`);
+              console.warn(`🖼️ LCP: ${entry.startTime.toFixed(2)}ms`);
               break;
             case "layout-shift":
-              const cls = entry as any;
+              const cls = entry as PerformanceEntry & { value: number };
               if (cls.value > 0.1) {
                 console.warn(
                   `⚠️ Layout shift detected: ${cls.value.toFixed(4)}`
@@ -88,19 +86,16 @@ export function PerformanceMonitor() {
           0
         );
 
-        console.group("📊 Bundle Performance Summary");
-        console.log(`Total JS Size: ${(totalSize / 1024).toFixed(2)}KB`);
-        console.log(`JS Chunks: ${jsResources.length}`);
-
         if (totalSize > 500 * 1024) {
-          console.warn("🚨 Bundle size is very large (>500KB)");
+          console.warn("🚨 Bundle Performance Summary\nBundle size is very large (>500KB)\n" +
+            `Total JS Size: ${(totalSize / 1024).toFixed(2)}KB\nJS Chunks: ${jsResources.length}`);
         } else if (totalSize > 250 * 1024) {
-          console.warn("⚠️ Bundle size is getting large (>250KB)");
+          console.warn("⚠️ Bundle Performance Summary\nBundle size is getting large (>250KB)\n" +
+            `Total JS Size: ${(totalSize / 1024).toFixed(2)}KB\nJS Chunks: ${jsResources.length}`);
         } else {
-          console.log("✅ Bundle size looks good");
+          console.warn("✅ Bundle Performance Summary\nBundle size looks good\n" +
+            `Total JS Size: ${(totalSize / 1024).toFixed(2)}KB\nJS Chunks: ${jsResources.length}`);
         }
-
-        console.groupEnd();
       }, 1000);
     });
 
@@ -128,7 +123,7 @@ export function useComponentPerformance(componentName: string) {
 
       if (loadTime > 100) {
         // Log components that take >100ms to load
-        console.log(`⏱️ ${componentName} loaded in ${loadTime.toFixed(2)}ms`);
+        console.warn(`⏱️ ${componentName} loaded in ${loadTime.toFixed(2)}ms`);
       }
     };
   }, [componentName]);
@@ -141,13 +136,13 @@ export function useLazyLoadingPerformance(componentName: string) {
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
 
-    console.log(`🔄 Lazy loading: ${componentName}`);
+    console.warn(`🔄 Lazy loading: ${componentName}`);
     const startTime = performance.now();
 
     return () => {
       const endTime = performance.now();
       const loadTime = endTime - startTime;
-      console.log(
+      console.warn(
         `✅ ${componentName} lazy loaded in ${loadTime.toFixed(2)}ms`
       );
     };

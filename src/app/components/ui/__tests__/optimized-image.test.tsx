@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image"
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import {
@@ -10,15 +11,38 @@ import {
 // Mock next/image
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: ({ src, alt, ...props }: any) => (
-    <img src={src} alt={alt} {...props} data-testid="next-image" />
+  default: ({ src, alt, ...props }: {
+    src: string;
+    alt: string;
+    width?: number;
+    height?: number;
+    fill?: boolean;
+    priority?: boolean;
+    className?: string;
+    quality?: number;
+    sizes?: string;
+    placeholder?: string;
+    blurDataURL?: string;
+    [key: string]: unknown;
+  }) => (
+      <Image src={src} alt={alt} {...props} data-testid="next-image" />
   ),
 }));
 
 // Mock next-cloudinary
 jest.mock("next-cloudinary", () => ({
-  CldImage: ({ src, alt, ...props }: any) => (
-    <img src={src} alt={alt} {...props} data-testid="cld-image" />
+  CldImage: ({ src, alt, ...props }: {
+    src: string;
+    alt: string;
+    width?: number;
+    height?: number;
+    fill?: boolean;
+    cloudinary?: boolean;
+    crop?: string;
+    gravity?: string;
+    [key: string]: unknown;
+  }) => (
+    <Image src={src} alt={alt} {...props} data-testid="cld-image" />
   ),
 }));
 

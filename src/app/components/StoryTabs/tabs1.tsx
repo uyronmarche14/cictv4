@@ -1,9 +1,7 @@
 "use client";
-import { Card } from "@/app/components/ui/card";
-
+import { CheckCircle2, Sparkles, Target, Zap } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { CheckCircle2, Sparkles, Target, Zap } from "lucide-react";
 import { LazyCldImage } from "@/app/components/ui/lazy-cloudinary";
 
 function Story1() {

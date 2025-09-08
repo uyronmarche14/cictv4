@@ -1,7 +1,9 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 
+
 // Bundle analyzer configuration
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
   openAnalyzer: process.env.ANALYZE === "true",
 });
@@ -110,15 +112,7 @@ const nextConfig: NextConfig = {
     }
 
     // Add bundle analysis in development
-    if (dev && !isServer) {
-      config.plugins.push(
-        new (require("webpack").DefinePlugin)({
-          "process.env.BUNDLE_ANALYZE": JSON.stringify(
-            process.env.BUNDLE_ANALYZE || "false"
-          ),
-        })
-      );
-    }
+    
 
     return config;
   },

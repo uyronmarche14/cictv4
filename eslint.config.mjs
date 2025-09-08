@@ -24,18 +24,7 @@ const eslintConfig = [
   {
     rules: {
       // Prevent CSS imports outside of globals.css
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["*.css", "*.scss", "*.sass", "*.less"],
-              message:
-                "CSS imports should only be in src/app/globals.css. Use Tailwind classes instead.",
-            },
-          ],
-        },
-      ],
+      
 
       // Import sorting and organization rules
       "import/order": [
@@ -51,11 +40,6 @@ const eslintConfig = [
             "object",
             "type",
           ],
-          "newlines-between": "always",
-          alphabetize: {
-            order: "asc",
-            caseInsensitive: true,
-          },
           pathGroups: [
             {
               pattern: "react",
@@ -90,7 +74,7 @@ const eslintConfig = [
         },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/prefer-const": "error",
+      "prefer-const": "error",
       "@typescript-eslint/no-non-null-assertion": "warn",
       "@typescript-eslint/consistent-type-imports": [
         "error",

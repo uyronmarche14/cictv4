@@ -1,5 +1,5 @@
 'use client';
-
+import Image from "next/image"
 import { Zap, Cpu, Fingerprint, Pencil } from 'lucide-react';
 
 const items = [
@@ -43,7 +43,7 @@ export default function Tabs3() {
         >
           {/* Image container */}
           <div className="relative aspect-video w-full overflow-hidden">
-            <img
+            <Image
               src={item.img}
               alt={item.title}
               className="h-full w-full object-cover transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-105"

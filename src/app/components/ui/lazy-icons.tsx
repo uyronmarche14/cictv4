@@ -1,7 +1,7 @@
 "use client";
+import type { ComponentProps } from "react";
 
 import { createLazyComponent } from "@/app/lib/utils/lazy-loading";
-import { ComponentProps } from "react";
 
 // Lazy load commonly used Lucide icons to reduce initial bundle size
 export const LazyChevronDown = createLazyComponent(

@@ -32,7 +32,7 @@ export function ScreenReaderAnnouncer({
       }, 100);
 
       // Clear the message after specified time
-      const clearTimeout = setTimeout(() => {
+      const clearMessageTimeout = setTimeout(() => {
         if (announcerRef.current) {
           announcerRef.current.textContent = "";
         }
@@ -40,7 +40,7 @@ export function ScreenReaderAnnouncer({
 
       return () => {
         clearTimeout(announceTimeout);
-        clearTimeout(clearTimeout);
+        clearTimeout(clearMessageTimeout);
       };
     }
   }, [message, clearAfter]);

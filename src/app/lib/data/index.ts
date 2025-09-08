@@ -22,10 +22,3 @@ export { footerData } from "./static/footer";
 // Example: import programsData from "./dynamic/programs.json";
 // Example: import testimonialsData from "./dynamic/testimonials.json";
 // Example: import faqsData from "./dynamic/faqs.json";
-
-// Validation testing utilities
-export {
-  testAllDataValidation,
-  testStaticDataValidation,
-  testDynamicDataValidation,
-} from "../utils/data-validation-test";

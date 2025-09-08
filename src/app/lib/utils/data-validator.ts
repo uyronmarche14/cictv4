@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {
+import type {
   StaticDataKey,
   DynamicDataKey,
   StaticDataMap,
@@ -28,7 +28,7 @@ export class DataValidationError extends Error {
    * Get formatted error messages
    */
   getFormattedErrors(): string[] {
-    return this.validationErrors.errors.map(
+    return this.validationErrors.issues.map(
       (error) => `${error.path.join(".")}: ${error.message}`
     );
   }
@@ -81,7 +81,7 @@ export function validateDynamicData<K extends DynamicDataKey>(
 
     // Additional validation for FAQ data consistency
     if (key === "faqs") {
-      validateFAQConsistency(validatedData as any);
+      validateFAQConsistency(validatedData as DynamicDataMap["faqs"]);
     }
 
     return validatedData;
@@ -114,7 +114,7 @@ export function safeValidateStaticData<K extends StaticDataKey>(
       error: new DataValidationError(
         key,
         new z.ZodError([]),
-        error?.message || "Unknown validation error"
+        error instanceof Error ? error.message : "Unknown validation error"
       ),
     };
   }
@@ -141,7 +141,7 @@ export function safeValidateDynamicData<K extends DynamicDataKey>(
       error: new DataValidationError(
         key,
         new z.ZodError([]),
-        error?.message || "Unknown validation error"
+        error instanceof Error ? error.message : "Unknown validation error"
       ),
     };
   }
@@ -167,7 +167,7 @@ export function validateMultipleStaticData<K extends StaticDataKey>(
           new DataValidationError(
             key,
             new z.ZodError([]),
-            error?.message || "Unknown error"
+            error instanceof Error ? error.message : "Unknown error"
           )
         );
       }
@@ -202,7 +202,7 @@ export function validateMultipleDynamicData<K extends DynamicDataKey>(
           new DataValidationError(
             key,
             new z.ZodError([]),
-            error?.message || "Unknown error"
+            error instanceof Error ? error.message : "Unknown error"
           )
         );
       }

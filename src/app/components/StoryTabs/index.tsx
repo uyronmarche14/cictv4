@@ -1,5 +1,6 @@
 "use client";
-
+import { lazy, Suspense } from "react";
+import Image from "next/image"
 import { Button } from "@/app/components/ui/button";
 import {
   Tabs,
@@ -7,13 +8,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/app/components/ui/tabs";
-import { lazy, Suspense } from "react";
 
 /* ─────────────  lazy-loaded tab contents  ───────────── */
 const Story1 = lazy(() => import("@/app/components/StoryTabs/tabs1"));
 const Story2 = lazy(() => import("@/app/components/StoryTabs/tabs2"));
 const Story3 = lazy(() => import("@/app/components/StoryTabs/tabs3"));
-import Logo from "@/app/lib/CICT.png";
+
 /* ─────────────  original About3 (unchanged except achievements)  ──────────���── */
 interface About3Props {
   title?: string;
@@ -83,7 +83,6 @@ export default function AboutWithTabs({
   },
   companiesTitle = "Valued by clients worldwide",
   companies = defaultCompanies,
-  achievementsTitle = "Our Achievements in Numbers",
   achievementsDescription = "Providing businesses with effective tools to improve workflows, boost efficiency, and encourage growth.",
 }: About3Props) {
   return (
@@ -96,14 +95,14 @@ export default function AboutWithTabs({
         </div>
 
         <div className="grid gap-7 lg:grid-cols-3">
-          <img
+          <Image
             src={mainImage.src}
             alt={mainImage.alt}
             className="size-full max-h-[620px] rounded-xl object-cover lg:col-span-2"
           />
           <div className="flex flex-col gap-7 md:flex-row lg:flex-col">
             <div className="bg-muted flex flex-col justify-between gap-6 rounded-xl p-7 md:w-1/2 lg:w-auto">
-              <img
+              <Image
                 src={breakout.src}
                 alt={breakout.alt}
                 className="mr-auto h-12"
@@ -122,7 +121,7 @@ export default function AboutWithTabs({
                 </a>
               </Button>
             </div>
-            <img
+            <Image
               src={secondaryImage.src}
               alt={secondaryImage.alt}
               className="grow rounded-xl object-cover md:w-1/2 lg:min-h-0 lg:w-auto"
@@ -136,7 +135,7 @@ export default function AboutWithTabs({
           <div className="mt-8 flex flex-wrap justify-center gap-8">
             {companies.map((company, idx) => (
               <div className="flex items-center gap-3" key={company.src + idx}>
-                <img
+                <Image
                   src={company.src}
                   alt={company.alt}
                   className="h-6 w-auto md:h-8"

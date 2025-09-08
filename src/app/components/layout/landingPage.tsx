@@ -2,11 +2,6 @@
 
 import React from "react";
 import Navbar from "@/app/components/layout/navbar";
-import { CleanGridBackground } from "../ripplebg";
-import {
-  createLazyComponent,
-  IntersectionLazy,
-} from "@/app/lib/utils/lazy-loading";
 import {
   HeroSectionFallback,
   FeaturesSectionFallback,
@@ -16,7 +11,12 @@ import {
   CTASectionFallback,
   StorySectionFallback,
 } from "@/app/components/ui/section-fallbacks";
-import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
+import {
+  createLazyComponent,
+  IntersectionLazy,
+} from "@/app/lib/utils/lazy-loading";
+import { CleanGridBackground } from "../ripplebg";
+
 
 // Create lazy components with specific fallbacks
 const HeroSection = createLazyComponent(
@@ -62,6 +62,7 @@ const CTASection = createLazyComponent(
 const FooterSection = createLazyComponent(
   () => import("@/app/components/layout/footer")
 );
+
 interface OptimizedLayoutProps {
   children?: React.ReactNode;
 }

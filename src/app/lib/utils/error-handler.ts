@@ -78,7 +78,7 @@ export function createSafeDataLoader<T>(
     } catch (error) {
       try {
         return handleDataError(error, context, config) as T;
-      } catch (handledError) {
+      } catch (_error) {
         // If error handling also throws, return null as ultimate fallback
         return null;
       }
@@ -100,7 +100,7 @@ export function withErrorHandling<TArgs extends unknown[], TReturn>(
     } catch (error) {
       try {
         return handleDataError(error, context, config) as TReturn;
-      } catch (handledError) {
+      } catch (_error) {
         return null;
       }
     }
