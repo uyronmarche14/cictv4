@@ -1,5 +1,5 @@
 "use client";
-import type { ComponentProps } from "react";
+import React, { type ComponentProps } from "react";
 
 import { createLazyComponent } from "@/app/lib/utils/lazy-loading";
 
@@ -13,7 +13,14 @@ export const LazyCldImage = createLazyComponent(
       </div>
     ),
   }
-);
+) as React.ComponentType<{
+  src: string;
+  alt: string;
+  fill?: boolean;
+  className?: string;
+  priority?: boolean;
+  sizes?: string;
+}>;
 
 export const LazyCldVideoPlayer = createLazyComponent(
   () =>

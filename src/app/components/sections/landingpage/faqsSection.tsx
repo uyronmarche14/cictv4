@@ -14,8 +14,26 @@ import faqs from "@data/dynamic/faqs.json";
 
 // Import school-related FAQ data from dynamic JSON
 
+interface FAQTopic {
+  id: string;
+  label: string;
+}
+
+interface FAQQuestion {
+  category: string;
+  question: string;
+  answer: string;
+}
+
+interface FAQsData {
+  title: string;
+  subtitle: string;
+  topics: FAQTopic[];
+  questions: FAQQuestion[];
+}
+
 const FAQsSection = () => {
-  const { title, subtitle, topics, questions } = faqs as any;
+  const { title, subtitle, topics, questions } = faqs as FAQsData;
   const topicsNavRef = useRef<HTMLElement>(null);
 
   // Keyboard navigation for topics navigation
