@@ -4,10 +4,10 @@ import { renderIcon } from "@/app/lib/utils/icon-mapper";
 
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
+import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 
 import logo from "@/app/lib/CICT.png";
 import { cictSectionData } from "@data/static/cict-section";
-import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 const { badge, title, subtitle, description, logo: logoData, features } = cictSectionData;
 
 const StreamlineSection = () => {

@@ -16,7 +16,7 @@ interface LazyComponentOptions {
 /**
  * Creates a lazy-loaded component with a loading fallback
  */
-export function createLazyComponent<T extends ComponentType<any>>(
+export function createLazyComponent<T extends ComponentType<unknown>>(
   importFn: () => Promise<{ default: T }>,
   options: LazyComponentOptions = {}
 ): T {

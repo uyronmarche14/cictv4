@@ -1,5 +1,4 @@
 "use client";
-import { CheckCircle2, Sparkles, Target, Zap } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { LazyCldImage } from "@/app/components/ui/lazy-cloudinary";

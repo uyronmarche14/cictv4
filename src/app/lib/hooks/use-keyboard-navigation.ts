@@ -85,7 +85,7 @@ export function useKeyboardNavigation(
           KEYBOARD_KEYS.ARROW_LEFT,
           KEYBOARD_KEYS.ARROW_RIGHT,
         ];
-        if (arrowKeys.includes(key as any)) {
+        if (arrowKeys.includes(key as typeof KEYBOARD_KEYS.ARROW_UP)) {
           event.preventDefault();
 
           let nextElement: HTMLElement | null = null;
@@ -114,7 +114,7 @@ export function useKeyboardNavigation(
       // Handle home/end key navigation
       if (enableHomeEnd) {
         const homeEndKeys = [KEYBOARD_KEYS.HOME, KEYBOARD_KEYS.END];
-        if (homeEndKeys.includes(key as any)) {
+        if (homeEndKeys.includes(key as typeof KEYBOARD_KEYS.HOME)) {
           event.preventDefault();
 
           const focusableElements = Array.from(
@@ -258,11 +258,11 @@ export function useRovingTabIndex(
       const isHorizontalKey = [
         KEYBOARD_KEYS.ARROW_LEFT,
         KEYBOARD_KEYS.ARROW_RIGHT,
-      ].includes(key as any);
+      ].includes(key as typeof KEYBOARD_KEYS.ARROW_LEFT);
       const isVerticalKey = [
         KEYBOARD_KEYS.ARROW_UP,
         KEYBOARD_KEYS.ARROW_DOWN,
-      ].includes(key as any);
+      ].includes(key as typeof KEYBOARD_KEYS.ARROW_UP);
 
       if (
         (orientation === "horizontal" && !isHorizontalKey) ||
