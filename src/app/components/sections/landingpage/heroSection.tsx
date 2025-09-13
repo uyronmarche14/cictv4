@@ -4,6 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { ClientOnly } from "@/app/components/client-only";
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
+import { heroData } from "@data/static/hero";
+
 
 const HeroSection = () => {
   // Animation variants
@@ -63,25 +65,25 @@ const HeroSection = () => {
               id="hero-heading"
               className="text-foreground mb-2 w-full text-center text-2xl font-bold select-none sm:text-3xl md:mb-4 md:text-4xl lg:text-5xl"
             >
-              <span className="block">PAGBATI!</span>
+              <span className="block">{heroData.greeting}</span>
               <span className="text-primary block text-4xl font-black sm:text-6xl md:text-8xl lg:text-9xl">
-                TECHSKHOLAR
+                {heroData.mainTitle}
               </span>
               <span className="block text-3xl font-black sm:text-4xl md:text-5xl lg:text-6xl">
                 NG{" "}
-                <span className="text-primary text-6xl font-black sm:text-7xl md:text-8xl lg:text-[14rem]">
-                  TAGUIG
+                <span className="text-primary text-6xl font-black sm:text-7xl md:text-8xl lg:text:[14rem]">
+                  {heroData.location}
                 </span>
               </span>
             </h1>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 md:mt-12 md:gap-4 lg:mt-16">
               <p className="text-foreground text-lg font-medium select-none sm:text-xl md:text-2xl">
-                Tara na!
+                {heroData.callToAction}
               </p>
               <button
                 className="focus:ring-primary cursor-pointer rounded-md p-2 transition-all duration-300 select-none hover:scale-110 focus:ring-2 focus:ring-offset-2 focus:outline-none"
                 onClick={() => {
-                  const aboutSection = document.querySelector("#about");
+                  const aboutSection = document.querySelector(heroData.scrollTarget ?? "#about");
                   aboutSection?.scrollIntoView({ behavior: "smooth" });
                 }}
                 aria-label="Scroll to about section"
@@ -119,7 +121,7 @@ const HeroSection = () => {
                 variants={animations.fadeUp}
               >
                 <motion.span className="block" variants={animations.fadeUp}>
-                  PAGBATI!
+                  {heroData.greeting}
                 </motion.span>
                 <motion.span
                   className="text-primary font-heading block text-4xl leading-[0.8] font-black tracking-tight select-none sm:text-6xl md:text-8xl lg:text-[12rem]"
@@ -127,7 +129,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.96 }}
                 >
-                  TECHSKHOLAR
+                  {heroData.mainTitle}
                 </motion.span>
                 <div className="flex w-full flex-col items-center justify-center gap-2 sm:flex-row">
                   <motion.span
@@ -142,7 +144,7 @@ const HeroSection = () => {
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.96 }}
                   >
-                    TAGUIG
+                    {heroData.location}
                   </motion.span>
                 </div>
               </motion.h1>
@@ -155,7 +157,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.08, y: -3 }}
                   whileTap={{ scale: 0.92 }}
                 >
-                  Tara na!
+                  {heroData.callToAction}
                 </motion.p>
                 <motion.button
                   variants={animations.bounce}
@@ -163,7 +165,7 @@ const HeroSection = () => {
                   whileHover={{ scale: 1.3, y: -5, rotate: 180 }}
                   className="focus:ring-primary cursor-pointer rounded-md p-2 transition-all duration-300 select-none focus:ring-2 focus:ring-offset-2 focus:outline-none"
                   onClick={() => {
-                    const aboutSection = document.querySelector("#about");
+                    const aboutSection = document.querySelector(heroData.scrollTarget ?? "#about");
                     aboutSection?.scrollIntoView({ behavior: "smooth" });
                   }}
                   aria-label="Scroll to about section"

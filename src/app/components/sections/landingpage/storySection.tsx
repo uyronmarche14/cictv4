@@ -3,17 +3,19 @@
 import { lazy } from "react";
 import { Header } from "@/app/components/headerTitleDes";
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
+import { storySectionData } from "@data/static/story-section";
 
 const Tabs = lazy(() => import("@/app/components/StoryTabs/index"));
 
 const StorySection = () => {
+  const { title, description, badge } = storySectionData;
   return (
     <section className="w-full py-8">
       <MaxWidthWrapper>
         <Header
-          title="Transform Your Vision"
-          description="Discover how our AI-powered platform revolutionizes project planning and team collaboration."
-          badge="The Journey"
+          title={title}
+          description={description}
+          badge={badge}
           badgeVariant="default"
         />
         <Tabs />

@@ -19,6 +19,14 @@ import {
   Linkedin,
   Facebook,
   Instagram,
+  Award,
+  GraduationCap,
+  Handshake,
+  Laptop,
+  Trophy,
+  Calendar,
+  Cpu,
+  Bot,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,6 +49,16 @@ const iconMap: Record<string, LucideIcon> = {
   TrendingUp,
   ShoppingCart,
   Lightbulb,
+  
+  // Story tabs icons
+  Award,
+  GraduationCap,
+  Handshake,
+  Laptop,
+  Trophy,
+  Calendar,
+  Cpu,
+  Bot,
   
   // UI icons
   ArrowRight,

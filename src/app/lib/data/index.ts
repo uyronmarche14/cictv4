@@ -16,6 +16,10 @@ export { navigationData } from "./static/navigation";
 export { cictSectionData } from "./static/cict-section";
 export { ctaSectionData } from "./static/cta-section";
 export { storySectionData } from "./static/story-section";
+export { storyTabsData } from "./static/story-tabs";
+export { aboutSectionData } from "./static/about-section";
+export { newsSectionData } from "./static/news-section";
+export { offerSectionData } from "./static/offer-section";
 export { footerData } from "./static/footer";
 
 // Dynamic data can be imported directly from JSON files when needed

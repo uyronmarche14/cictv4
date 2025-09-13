@@ -4,31 +4,12 @@ import { CheckCircle2, Sparkles, Target, Zap } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { LazyCldImage } from "@/app/components/ui/lazy-cloudinary";
+import { storyTabsData } from "@/app/lib/data/static/story-tabs";
+import { renderIcon } from "@/app/lib/utils/icon-mapper";
 
 function Story2() {
-  const features = [
-    {
-      icon: <Sparkles className="h-5 w-5" />,
-      title: "AI-Powered Mapping",
-      description:
-        "Generate comprehensive sitemaps with intelligent AI analysis",
-    },
-    {
-      icon: <Target className="h-5 w-5" />,
-      title: "Strategic Planning",
-      description: "Scope projects better with clear content architecture",
-    },
-    {
-      icon: <Zap className="h-5 w-5" />,
-      title: "Instant Results",
-      description: "Create complete sitemaps in seconds, not hours",
-    },
-    {
-      icon: <CheckCircle2 className="h-5 w-5" />,
-      title: "Clear Structure",
-      description: "Identify key pages and sections with precision",
-    },
-  ];
+  const data = storyTabsData.tab2;
+  const features = data.features;
 
   return (
     <div className="mx-auto w-full max-w-7xl">
@@ -37,8 +18,8 @@ function Story2() {
         <div className="relative h-full min-h-[500px] w-full overflow-hidden rounded-xl">
           <div className="from-primary/5 absolute inset-0 bg-gradient-to-br to-transparent" />
           <LazyCldImage
-            src="https://res.cloudinary.com/ddnxfpziq/image/upload/v1756660320/cict4_qqksfh.jpg"
-            alt="AI-powered sitemap generation dashboard"
+            src={data.image.src}
+            alt={data.image.alt}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
@@ -52,17 +33,15 @@ function Story2() {
               variant="secondary"
               className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 w-fit"
             >
-              Advanced Features
+              {data.badge}
             </Badge>
 
             <h2 className="text-foreground text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-              Powerful tools for modern teams
+              {data.title}
             </h2>
 
             <p className="text-muted-foreground text-lg leading-relaxed">
-              From concept to completion, our platform provides everything you
-              need to build, manage, and scale your digital presence with
-              confidence.
+              {data.description}
             </p>
           </div>
 
@@ -73,7 +52,7 @@ function Story2() {
                 className="hover:bg-muted/20 flex items-start gap-4 rounded-lg py-3 transition-colors duration-200"
               >
                 <div className="bg-primary/10 text-primary flex-shrink-0 rounded-lg p-2">
-                  {feature.icon}
+                  {renderIcon(feature.icon, { className: "h-5 w-5" })}
                 </div>
                 <div className="space-y-1">
                   <h3 className="text-foreground font-semibold">
@@ -92,7 +71,7 @@ function Story2() {
               size="lg"
               className="bg-primary hover:bg-primary/90 shadow-primary/20 rounded-full px-8 shadow-lg"
             >
-              Explore Features
+              {data.ctaText}
             </Button>
           </div>
         </div>

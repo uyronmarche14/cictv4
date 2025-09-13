@@ -1,31 +1,13 @@
 import React from "react";
 import Image from "next/image";
-import { Target, Eye, Brain } from "lucide-react";
+import { renderIcon } from "@/app/lib/utils/icon-mapper";
 
 import { Card, CardContent } from "@/app/components/ui/card";
 import logo from "@/app/lib/CICT.png";
+import { cictSectionData } from "@data/static/cict-section";
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
-
-const features = [
-  {
-    title: "MISSSION",
-    icon: Target,
-    description:
-      "Skip the manual tasks and complex setups. With Streamline, you can focus on what matters most while the system handles the rest.",
-  },
-  {
-    title: "VISION",
-    icon: Eye,
-    description:
-      "Dont overspend on unnecessary tools or teams. Keep your operations lean and efficient by automating your workflows with Streamline.",
-  },
-  {
-    title: "PHILOSOPHY",
-    icon: Brain,
-    description:
-      "Say goodbye to managing multiple platforms. Streamline takes care of all the heavy lifting, ensuring consistent results with minimal hassle.",
-  },
-];
+import { Badge } from "@/app/components/ui/badge";
+const { badge, title, subtitle, description, logo: logoData, features } = cictSectionData;
 
 const StreamlineSection = () => {
   return (
@@ -34,29 +16,31 @@ const StreamlineSection = () => {
         {/* Header Section */}
         <div className="mb-16 flex flex-col items-center justify-between gap-12 lg:flex-row">
           <div className="space-y-4 lg:w-full">
-            <p className="text-primary text-sm font-medium tracking-wider uppercase">
-              What is CICT?
-            </p>
+            <Badge 
+              variant="default"
+              className=" text-sm font-medium tracking-wider uppercase"
+            >
+              {badge}
+            </Badge>           
             <h2 className="text-primary text-4xl leading-tight font-bold lg:text-5xl">
-              COLLEGE OF INFORMATION AND
+              {title}
               <br />
-              COMMUNICATION TECHNOLOGY
+              {subtitle}
             </h2>
             <p className="text-muted-foreground max-w-md text-lg leading-relaxed">
-              Streamline optimizes your workflow from start to finish. It
-              gathers information, generates reports, automates tasks, and
-              delivers results—all in one seamless system.
+              {description}
             </p>
           </div>
+          
 
           {/* Logo/Icon */}
           <div className="flex justify-center lg:w-1/2 lg:justify-end">
             <div className="relative h-48 w-48">
               <Image
-                src={logo}
-                alt="CICT Logo"
-                width={218}
-                height={218}
+                src={logo ?? logoData.src}
+                alt={logoData.alt}
+                width={logoData.width}
+                height={logoData.height}
                 className="object-contain drop-shadow-2xl"
                 priority
               />
@@ -76,7 +60,7 @@ const StreamlineSection = () => {
 
               <CardContent className="relative p-6">
                 <div className="bg-primary/10 group-hover:bg-primary/20 mb-5 flex h-12 w-12 items-center justify-center rounded-md transition-colors duration-300">
-                  <feature.icon className="text-primary h-6 w-6" />
+                  {renderIcon(feature.icon, { className: "text-primary h-6 w-6" })}
                 </div>
                 <h3 className="text-foreground group-hover:text-primary mb-3 text-xl font-semibold transition-colors duration-300">
                   {feature.title}
