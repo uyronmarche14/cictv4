@@ -5,7 +5,7 @@ import { createLazyComponent } from "@/app/lib/utils/lazy-loading";
 
 // Lazy load Cloudinary components to reduce initial bundle size
 export const LazyCldImage = createLazyComponent(
-  () => import("next-cloudinary").then((mod) => ({ default: mod.CldImage })),
+  () => import("next-cloudinary").then((mod) => ({ default: mod.CldImage as React.ComponentType<unknown> })),
   {
     fallback: () => (
       <div className="bg-muted/20 flex h-full w-full animate-pulse items-center justify-center rounded-lg">
@@ -24,7 +24,7 @@ export const LazyCldImage = createLazyComponent(
 
 export const LazyCldVideoPlayer = createLazyComponent(
   () =>
-    import("next-cloudinary").then((mod) => ({ default: mod.CldVideoPlayer })),
+    import("next-cloudinary").then((mod) => ({ default: mod.CldVideoPlayer as React.ComponentType<unknown> })),
   {
     fallback: () => (
       <div className="bg-muted/20 flex h-full w-full animate-pulse items-center justify-center rounded-lg">
