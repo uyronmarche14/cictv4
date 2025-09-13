@@ -3,8 +3,9 @@ import { Button } from "@/app/components/ui/button";
 
 import { MaxWidthWrapper } from "@/app/components/ui/max-width-wrapper";
 import { Header } from "@/app/components/headerTitleDes";
-import { offerSectionData } from "@data/static/offer-section";
 import { renderIcon } from "@/app/lib/utils/icon-mapper";
+
+import { offerSectionData } from "@data/static/offer-section";
 
 const BenefitItem: React.FC<{ benefit: { icon: string; title: string }; isBottom?: boolean }> = ({
   benefit,
