@@ -32,7 +32,7 @@ export function createLazyComponent<T extends ComponentType<unknown>>(
 
     const content = (
       <Suspense fallback={<FallbackComponent />}>
-        <LazyComponent {...props} />
+        <LazyComponent {...(props as any)} />
       </Suspense>
     );
 

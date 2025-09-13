@@ -14,7 +14,7 @@ import { KEYBOARD_KEYS } from "@/app/lib/utils/accessibility";
 const ThemeToggle = createLazyComponent(
   () =>
     import("@/app/components/theme-toggle").then((mod) => ({
-      default: mod.ThemeToggle,
+      default: mod.ThemeToggle as React.ComponentType<unknown>,
     })),
   {
     fallback: () => (
