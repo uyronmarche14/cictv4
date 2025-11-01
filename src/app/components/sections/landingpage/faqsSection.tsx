@@ -84,7 +84,7 @@ const FAQsSection = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-16 space-y-4">
-          <h2 className="text-4xl md:text-5xl font-heading font-medium text-foreground leading-tight">
+          <h2 className="text-balance text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent leading-tight">
             {title}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

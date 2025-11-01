@@ -35,10 +35,8 @@ const StreamlineSection = () => {
             <p className="text-sm text-primary font-medium tracking-wider uppercase">
               What is CICT?
             </p>
-            <h2 className="text-4xl lg:text-5xl font-bold text-primary leading-tight">
-              COLLEGE OF INFORMATION AND
-              <br />
-              COMMUNICATION TECHNOLOGY
+            <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent leading-tight">
+              COLLEGE OF INFORMATION AND COMMUNICATION TECHNOLOGY
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
               Streamline optimizes your workflow from start to finish. It

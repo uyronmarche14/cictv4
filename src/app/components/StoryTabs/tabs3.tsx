@@ -43,6 +43,7 @@ export default function Tabs3() {
         >
           {/* Image container */}
           <div className="relative aspect-video w-full overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.img}
               alt={item.title}

@@ -58,17 +58,17 @@ const HeroSection = () => {
       <div className="relative w-full max-w-[90vw] sm:max-w-[85vw] md:max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 lg:py-20">
         <div className="flex flex-col items-center justify-center">
           <div className="w-full flex flex-col items-center justify-center text-center">
-            <h1 className="font-bold text-foreground  text-center w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 md:mb-4 select-none">
+            <h1 className="font-black text-foreground text-center w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 md:mb-4 select-none" style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.1), -1px -1px 0 rgba(255,255,255,0.1)' }}>
               PAGBATI!
             </h1>
-            <h1 className="text-center font-black text-primary leading-[0.8] mb-2 md:mb-4 tracking-tighter w-full text-4xl sm:text-6xl md:text-8xl lg:text-9xl cursor-pointer select-none">
+            <h1 className="text-center font-black text-primary leading-[0.8] mb-2 md:mb-4 tracking-tighter w-full text-4xl sm:text-6xl md:text-8xl lg:text-9xl cursor-pointer select-none" style={{ WebkitTextStroke: '2px currentColor', textShadow: '3px 3px 0 rgba(0,0,0,0.2), -2px -2px 0 rgba(255,255,255,0.1)' }}>
               TECHNEKSCHOLAR
             </h1>
             <div className="flex flex-col sm:flex-row items-center justify-center w-full gap-2 mb-4 md:mb-6">
-              <h1 className="text-center text-foreground font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl select-none">
+              <h1 className="text-center font-black text-foreground font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl select-none" style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.1), -1px -1px 0 rgba(255,255,255,0.1)' }}>
                 NG
               </h1>
-              <h1 className="text-center font-black text-primary leading-[0.8] tracking-tighter font-heading text-4xl sm:text-6xl md:text-8xl lg:text-[14rem] cursor-pointer select-none">
+              <h1 className="text-center font-black text-primary leading-[0.8] tracking-tighter font-heading text-4xl sm:text-6xl md:text-8xl lg:text-[14rem] cursor-pointer select-none" style={{ WebkitTextStroke: '3px currentColor', textShadow: '4px 4px 0 rgba(0,0,0,0.2), -2px -2px 0 rgba(255,255,255,0.1)' }}>
                 TAGUIG
               </h1>
             </div>
@@ -102,16 +102,18 @@ const HeroSection = () => {
         <div className="flex flex-col items-center justify-center">
           <div className="w-full flex flex-col items-center justify-center text-center">
             <motion.h1
-              className="font-bold text-foreground text-center w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 md:mb-4 select-none"
+              className="font-black text-foreground text-center w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 md:mb-4 select-none"
               variants={animations.fadeUp}
+              style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.1), -1px -1px 0 rgba(255,255,255,0.1)' }}
             >
               PAGBATI
             </motion.h1>
             <motion.h1
-              className="text-center font-black text-primary leading-[0.8] mb-2 md:mb-4 tracking-tighter w-full font-heading text-4xl sm:text-6xl md:text-8xl lg:text-9xl cursor-pointer select-none"
+              className="text-center font-black text-primary leading-[0.8] mb-2 md:mb-4 tracking-tighter w-full font-heading text-4xl sm:text-6xl md:text-8xl lg:text-[12rem] cursor-pointer select-none"
               variants={animations.scaleIn}
               whileHover={{ scale: 1.03, y: -2 }}
               whileTap={{ scale: 0.96 }}
+              style={{ WebkitTextStroke: '2px currentColor', textShadow: '3px 3px 0 rgba(0,0,0,0.2), -2px -2px 0 rgba(255,255,255,0.1)' }}
             >
               TECHSKHOLAR
             </motion.h1>
@@ -119,14 +121,16 @@ const HeroSection = () => {
               <motion.h1
                 className="text-center font-black text-foreground font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl select-none"
                 variants={animations.slideLeft}
+                style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.1), -1px -1px 0 rgba(255,255,255,0.1)' }}
               >
                 ng
               </motion.h1>
               <motion.h1
-                className="text-center font-black text-primary leading-[0.8] tracking-tighter font-heading text-6xl sm:text-7xl md:text-8xl lg:text-[14rem] cursor-pointer select-none"
+                className="text-center font-black text-primary leading-[0.8] tracking-tighter font-heading text-6xl sm:text-7xl md:text-8xl lg:text-[20rem] cursor-pointer select-none"
                 variants={animations.slideRight}
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.96 }}
+                style={{ WebkitTextStroke: '3px currentColor', textShadow: '4px 4px 0 rgba(0,0,0,0.2), -2px -2px 0 rgba(255,255,255,0.1)' }}
               >
                 TAGUIG
               </motion.h1>

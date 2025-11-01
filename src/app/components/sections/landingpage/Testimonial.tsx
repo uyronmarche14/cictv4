@@ -99,7 +99,9 @@ export default function WallOfLoveSection() {
             <div className="py-16 md:py-32">
                 <div className="mx-auto max-w-7xl">
                     <div className="text-center">
-                        <h2 className="text-3xl font-semibold">Loved by the Community</h2>
+                        <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                            Loved by the Community
+                        </h2>
                         <p className="mt-6">Harum quae dolore orrupti aut temporibus ariatur.</p>
                     </div>
                     <div className="mt-8 grid gap-3 sm:grid-cols-2 md:mt-12 lg:grid-cols-3">

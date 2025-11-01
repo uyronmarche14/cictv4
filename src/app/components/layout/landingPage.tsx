@@ -3,8 +3,7 @@
 import React from "react";
 import { lazy } from "react";
 import Navbar from "@/app/components/layout/navbar";
-import { CleanGridBackground } from "../ripplebg";
-
+import PixelBlast from "../ripplebg";
 const HeroSection = lazy(
   () => import("@/app/components/sections/landingpage/heroSection")
 );
@@ -21,9 +20,7 @@ const FAQsSection = lazy(
   () => import("@/app/components/sections/landingpage/faqsSection")
 );
 
-const OfferSection = lazy(
-  () => import("@/app/components/sections/landingpage/offerSection")
-);
+
 
 const StorySection = lazy(
   () => import("@/app/components/sections/landingpage/storySection")
@@ -47,22 +44,43 @@ interface OptimizedLayoutProps {
 const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
   return (
     <div className="min-h-screen bg-background dark:bg-background">
-     <CleanGridBackground 
-        rows={100}
-        cols={100}
-        cellSize={20}
-        opacity={0.03}
-        borderOpacity={0.8}
-      />
       <Navbar />
       <main className="relative">
-        <HeroSection />
+        {/* Hero Section with PixelBlast Background */}
+        <div className="relative">
+          {/* PixelBlast Background - Positioned behind Hero */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+            <PixelBlast
+              variant="circle"
+              pixelSize={6}
+              color="#B19EEF"
+              patternScale={3}
+              patternDensity={1.2}
+              pixelSizeJitter={0.5}
+              enableRipples
+              rippleSpeed={0.4}
+              rippleThickness={0.12}
+              rippleIntensityScale={1.5}
+              liquid
+              liquidStrength={0.12}
+              liquidRadius={1.2}
+              liquidWobbleSpeed={5}
+              speed={0.6}
+              edgeFade={0.25}
+              transparent
+            />
+          </div>
+          {/* Hero Content */}
+          <div className="relative z-10">
+            <HeroSection />
+          </div>
+        </div>
+
+        {/* Other Sections */}
         <CICTSection />
         <StorySection />
-        <OfferSection />
         <NewsSection />
         <FAQsSection />
-        
         <TestimonialSeciton />
         <CTASection />
         <FooterSection />

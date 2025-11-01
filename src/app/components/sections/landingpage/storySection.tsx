@@ -2,7 +2,6 @@
 
 import React from "react";
 import { lazy } from "react";
-import { Card } from '@/app/components/ui/card';
 
 const Tabs = lazy(
   () => import("@/app/components/StoryTabs/index")

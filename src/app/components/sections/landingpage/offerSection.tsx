@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from '@/app/components/ui/button';
-import { Card, CardContent } from '@/app/components/ui/card';
 import { Code, Brain, Database, Shield, Cloud, Search, Briefcase, Users, Settings, TrendingUp, ShoppingCart, Lightbulb } from 'lucide-react';
 
 interface CourseBenefit {
@@ -66,7 +65,7 @@ export default function OfferSection() {
         transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-4xl lg:text-5xl font-bold text-accent-foreground mb-4">
+            <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
               Bachelor of Science in Computer Science
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
@@ -75,7 +74,7 @@ export default function OfferSection() {
             <p className="text-base text-accent-foreground/80 mb-12 max-w-3xl mx-auto leading-relaxed">
               Our comprehensive BSCS program equips you with the skills to excel in software development, 
               artificial intelligence, and computational problem-solving. From fundamental algorithms to 
-              advanced machine learning applications, you'll be prepared for the tech industry's most 
+              advanced machine learning applications, you&apos;ll be prepared for the tech industry&apos;s most 
               challenging roles.
             </p>
           </div>
@@ -108,7 +107,7 @@ export default function OfferSection() {
         transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-4xl lg:text-5xl font-bold text-accent-foreground mb-4">
+            <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
               Bachelor of Science in Information Systems
             </h2>
             <p className="text-xl text-accent-foreground/80 mb-8">

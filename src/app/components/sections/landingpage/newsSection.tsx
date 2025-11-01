@@ -19,7 +19,9 @@ export default function NewsSection() {
         />
 
         <div className="grid gap-6 md:grid-cols-2 md:gap-12">
-          <h2 className="text-4xl font-medium text-foreground text-heading">CICT NEWS AND EVENTS YOUR ONE STOP TO NEWS AND UPDATES </h2>
+          <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+            CICT NEWS AND EVENTS YOUR ONE STOP TO NEWS AND UPDATES
+          </h2>
           <div className="space-y-6">
             <p className="text-muted-foreground">Stay updated with the latest news, events, and announcements from the College of Information and Communication Technology.</p>
 
@@ -28,7 +30,7 @@ export default function NewsSection() {
               variant="secondary"
               size="sm"
               className="gap-1 pr-1.5 bg-primary hover:bg-accent">
-              <Link href="#">
+              <Link href="/news">
                 <span>View All News</span>
                 <ChevronRight className="size-2" />
               </Link>
