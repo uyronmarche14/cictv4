@@ -54,6 +54,7 @@ export default function Navbar() {
                     alt="CICT Logo"
                     width={28}
                     height={28}
+                    style={{ width: "auto", height: "auto" }}
                     className="object-contain transition-transform duration-300 group-hover:scale-105"
                     priority
                   />

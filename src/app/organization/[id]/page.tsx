@@ -44,7 +44,14 @@ export default function OrganizationDetailPage() {
           </Button>
 
           <div className="flex items-center gap-3">
-            <CldImage src={org.logo} alt={org.name} width={32} height={32} className="h-8 w-8 object-contain" />
+            <CldImage 
+              src={org.logo} 
+              alt={org.name} 
+              width={32} 
+              height={32} 
+              className="h-8 w-8 object-contain" 
+              style={{ width: "auto", height: "auto" }}
+            />
             <span className="font-bold" style={{ color: org.color.primary }}>{org.name}</span>
           </div>
         </div>

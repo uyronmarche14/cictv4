@@ -8,7 +8,7 @@ import { CldImage } from 'next-cloudinary';
 /* ─────────────  lazy-loaded tab contents  ───────────── */
 const OrganizationShowcase = lazy(() => import('@/app/components/StoryTabs/OrganizationShowcase'));
 
-import Logo from "@/app/lib/CICT.png"
+
 /* ─────────────  original About3 (unchanged except achievements)  ──────────���── */
 interface About3Props {
   title?: string;
@@ -64,7 +64,7 @@ export default function AboutWithTabs({
     alt: 'CICT Students',
   },
   breakout = {
-    src: Logo.src,
+    src: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1757693130/CICT_Logo_m5ztoa.png',
     alt: 'CICT Logo',
     title: 'Excellence in Technology Education',
     description:
@@ -78,7 +78,7 @@ export default function AboutWithTabs({
   'Discover the vibrant student organizations that make CICT a thriving community of innovation and collaboration.',
 }: About3Props) {
   return (
-    <section className="py-20 md:py-32">
+    <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6">
         {/* Hero Grid */}
         <div className="mb-16 grid gap-6 text-center md:grid-cols-2 md:text-left md:gap-12">
@@ -93,7 +93,7 @@ export default function AboutWithTabs({
         {/* Image Grid - Clean Layout */}
         <div className="grid gap-6 lg:grid-cols-3 mb-20">
           {/* Main Image */}
-          <div className="lg:col-span-2 h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl border border-border/20">
+          <div className="relative lg:col-span-2 h-[400px] lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl border border-border/20">
             <CldImage
               src={mainImage.src}
               alt={mainImage.alt}
@@ -148,6 +148,7 @@ export default function AboutWithTabs({
                   alt={company.alt}
                   width={128}
                   height={64}
+                  style={{ width: "auto", height: "auto" }}
                   className="h-12 w-auto md:h-16 object-contain grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
                 />
               </div>
