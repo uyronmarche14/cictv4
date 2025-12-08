@@ -1,59 +1,59 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { CldImage } from 'next-cloudinary';
-import { ArrowLeft, Calendar, Clock, User, Tag, Share2 } from 'lucide-react';
-import { newsArticles } from '@/app/lib/data/newsData';
-import { Badge } from '@/app/components/ui/badge';
-import { Button } from '@/app/components/ui/button';
-import DetailPageCTA from '@/app/components/sections/DetailPageCTA';
-import DetailPageFooter from '@/app/components/sections/DetailPageFooter';
+import { ArrowLeft, Calendar, User, Tag, Share2, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import ContactCTASection from '@/components/CTASection';
+import { useNewsById } from '@/hooks/use-news-by-id';
+import { useNews } from '@/hooks/use-news';
+import { NewsStatus } from '@/types';
+import { format } from 'date-fns';
+import Link from 'next/link';
 
 export default function NewsDetailPage() {
   const params = useParams();
   const router = useRouter();
   const newsId = params.id as string;
 
-  const article = newsArticles.find(a => a.id === newsId);
+  const { data: article, isLoading, error } = useNewsById(newsId);
+  const { data: relatedData } = useNews(1, 3, NewsStatus.PUBLISHED);
 
-  if (!article) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Error or not found state
+  if (error || !article) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Article Not Found</h1>
-          <Button onClick={() => router.back()} variant="outline">
-            Go Back
+          <p className="text-muted-foreground mb-4">
+            The article you&apos;re looking for doesn&apos;t exist or has been removed.
+          </p>
+          <Button onClick={() => router.push('/news')} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to News
           </Button>
         </div>
       </div>
     );
   }
 
-  const relatedArticles = newsArticles
-    .filter(a => a.id !== newsId && (a.category === article.category || a.tags.some(tag => article.tags.includes(tag))))
-    .slice(0, 3);
+  const author = typeof article.author === 'object'
+    ? `${article.author.firstName} ${article.author.lastName}`
+    : 'CICT';
+
+  const relatedArticles = relatedData?.news.filter(a => a._id !== newsId).slice(0, 3) || [];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border/50 sticky top-0 z-10 bg-background/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2 hover:bg-transparent"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </Button>
-
-          <Badge variant="outline" className="text-xs font-medium">
-            {article.category}
-          </Badge>
-        </div>
-      </div>
-
       {/* Main Content */}
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Title */}
@@ -65,28 +65,34 @@ export default function NewsDetailPage() {
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-8">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            <span>{article.author}</span>
+            <span>{author}</span>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            <span>{new Date(article.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            <span>{article.readTime}</span>
+            <span>
+              {article.publishedAt
+                ? format(new Date(article.publishedAt), 'MMMM d, yyyy')
+                : format(new Date(article.createdAt), 'MMMM d, yyyy')
+              }
+            </span>
           </div>
         </div>
 
         {/* Featured Image */}
-        <div className="relative aspect-video rounded-2xl overflow-hidden mb-8 shadow-2xl">
-          <CldImage
-            src={article.image}
-            alt={article.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 896px"
-            priority
-          />
+        {article.imageUrl && (
+          <div className="relative aspect-video rounded-2xl overflow-hidden mb-8 shadow-2xl">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={article.imageUrl}
+              alt={article.title}
+              className="object-cover w-full h-full"
+            />
+          </div>
+        )}
+
+        {/* Excerpt */}
+        <div className="text-xl text-muted-foreground mb-8 font-medium leading-relaxed">
+          {article.excerpt}
         </div>
 
         {/* Content */}
@@ -117,30 +123,25 @@ export default function NewsDetailPage() {
           </div>
         )}
 
-        {/* Gallery */}
-        {article.gallery && article.gallery.length > 0 && (
-          <div className="mb-12">
-            <h3 className="text-2xl font-bold text-foreground mb-6">Gallery</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {article.gallery.map((image, idx) => (
-                <div key={idx} className="relative aspect-video rounded-xl overflow-hidden">
-                  <CldImage
-                    src={image}
-                    alt={`Gallery image ${idx + 1}`}
-                    fill
-                    className="object-cover hover:scale-110 transition-transform duration-500"
-                    sizes="(max-width: 768px) 50vw, 33vw"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Share */}
         <div className="flex items-center gap-4 py-6 border-t border-b border-border/50 mb-12">
           <span className="text-sm font-semibold text-foreground">Share this article:</span>
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: article.title,
+                  text: article.excerpt,
+                  url: window.location.href,
+                });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+              }
+            }}
+          >
             <Share2 className="h-4 w-4" />
             Share
           </Button>
@@ -151,47 +152,49 @@ export default function NewsDetailPage() {
           <div>
             <h3 className="text-2xl font-bold text-foreground mb-6">Related Articles</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {relatedArticles.map((related) => (
-                <a
-                  key={related.id}
-                  href={`/news/${related.id}`}
-                  className="group block"
-                >
-                  <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
-                    <CldImage
-                      src={related.image}
-                      alt={related.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                    />
-                  </div>
-                  <Badge variant="outline" className="text-xs mb-2">
-                    {related.category}
-                  </Badge>
-                  <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                    {related.title}
-                  </h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {related.readTime}
-                  </p>
-                </a>
-              ))}
+              {relatedArticles.map((related) => {
+                const relatedAuthor = typeof related.author === 'object'
+                  ? `${related.author.firstName} ${related.author.lastName}`
+                  : 'CICT';
+
+                return (
+                  <Link
+                    key={related._id}
+                    href={`/news/${related._id}`}
+                    className="group block"
+                  >
+                    <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
+                      {related.imageUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={related.imageUrl}
+                          alt={related.title}
+                          className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <Badge variant="outline" className="text-xs mb-2">
+                      {related.status}
+                    </Badge>
+                    <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      {related.title}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      By {relatedAuthor}
+                    </p>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
       </article>
 
-      <DetailPageCTA
-        title="Never Miss an Update"
-        subtitle="Stay Updated"
-        description="Subscribe to get the latest news and updates from CICT"
-        primaryButtonText="Contact Us"
-        primaryButtonHref="mailto:cict@university.edu"
-        contactEmail="cict@university.edu"
-      />
-
-      <DetailPageFooter />
+      <ContactCTASection />
     </div>
   );
 }
