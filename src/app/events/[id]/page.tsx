@@ -1,77 +1,35 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { eventAPI } from '@/lib/api/event';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, Info } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
 import MeshGradientBg from '@/components/ripplebg';
 import Image from 'next/image';
+import { StructuredContent } from '@/components/StructuredContent';
+import ScrollingGallery from '@/components/ScrollingGallery';
+import { getOwnershipLabel } from '@/lib/content-ownership';
 
 export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
   const eventId = params.id as string;
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
     queryFn: () => eventAPI.getById(eventId),
     enabled: !!eventId,
+    staleTime: 0,
   });
 
   const event = data?.data.event;
-
-  const isJoined = isAuthenticated && user && event?.attendees.includes(user._id);
-  const isFull = event && event.maxAttendees > 0 && event.attendees.length >= event.maxAttendees;
   const isPast = event && new Date(event.endDate) < new Date();
-
-  const joinMutation = useMutation({
-    mutationFn: () => eventAPI.join(eventId),
-    onSuccess: () => {
-      toast.success('Successfully joined the event!');
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to join event');
-    },
-  });
-
-  const leaveMutation = useMutation({
-    mutationFn: () => eventAPI.leave(eventId),
-    onSuccess: () => {
-      toast.success('Left the event.');
-      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
-      queryClient.invalidateQueries({ queryKey: ['events'] });
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to leave event');
-    },
-  });
-
-  const handleAction = () => {
-    if (!isAuthenticated) {
-      router.push('/admin/login');
-      return;
-    }
-
-    if (isJoined) {
-      if (confirm('Are you sure you want to leave this event?')) {
-        leaveMutation.mutate();
-      }
-    } else {
-      joinMutation.mutate();
-    }
-  };
-
-  const isActionLoading = joinMutation.isPending || leaveMutation.isPending;
+  const heroImage = event?.coverImage?.imageUrl || event?.imageUrl;
+  const bodyHtml = event?.bodyHtml || event?.description || '';
 
   if (isLoading) {
     return (
@@ -92,7 +50,7 @@ export default function EventDetailsPage() {
           <div className="text-center py-20">
             <h1 className="text-2xl font-bold mb-4">Event Not Found</h1>
             <p className="text-muted-foreground mb-8">
-              The event you're looking for doesn't exist or has been removed.
+              The event you&apos;re looking for doesn&apos;t exist or has been removed.
             </p>
             <Button onClick={() => router.push('/events')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -107,10 +65,10 @@ export default function EventDetailsPage() {
   return (
     <div className="relative min-h-screen pt-24 pb-16">
       <MeshGradientBg variant="subtle" className="fixed inset-0" interactive={false} />
-      
+
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="mb-6"
           onClick={() => router.push('/events')}
         >
@@ -119,11 +77,11 @@ export default function EventDetailsPage() {
         </Button>
 
         <Card className="overflow-hidden">
-          {event.imageUrl && (
+          {heroImage && (
             <div className="relative h-64 md:h-96 w-full">
               <Image
-                src={event.imageUrl}
-                alt={event.title}
+                src={heroImage}
+                alt={event.coverImage?.alt || event.title}
                 fill
                 className="object-cover"
                 priority
@@ -137,9 +95,14 @@ export default function EventDetailsPage() {
                 <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.title}</h1>
                 <p className="text-lg text-muted-foreground">{event.excerpt}</p>
               </div>
-              <Badge variant={event.status === 'published' ? 'default' : 'secondary'}>
-                {event.status}
-              </Badge>
+              <div className="flex flex-col items-end gap-2">
+                <Badge variant={event.status === 'published' ? 'default' : 'secondary'}>
+                  {event.status}
+                </Badge>
+                <Badge variant="outline">
+                  {getOwnershipLabel(event)}
+                </Badge>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -172,10 +135,10 @@ export default function EventDetailsPage() {
               <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
                 <Users className="w-5 h-5 text-primary" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Attendees</p>
+                  <p className="text-sm text-muted-foreground">Attendance</p>
                   <p className="font-medium">
                     {event.attendees.length}
-                    {event.maxAttendees > 0 ? ` / ${event.maxAttendees}` : ''} Attending
+                    {event.maxAttendees > 0 ? ` / ${event.maxAttendees}` : ''} Interested
                   </p>
                 </div>
               </div>
@@ -183,7 +146,7 @@ export default function EventDetailsPage() {
 
             <div className="pt-6 border-t">
               <h2 className="text-xl font-semibold mb-4">About This Event</h2>
-              <p className="text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+              <StructuredContent bodyHtml={bodyHtml} sections={event.sections} />
             </div>
 
             {event.tags && event.tags.length > 0 && (
@@ -207,20 +170,46 @@ export default function EventDetailsPage() {
               <p className="text-sm text-muted-foreground">{event.organizer.email}</p>
             </div>
 
+            {event.schedule && event.schedule.length > 0 ? (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-4">Program Flow</h3>
+                <div className="space-y-3">
+                  {event.schedule.map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-sm font-medium text-primary">{item.label}</span>
+                        <span className="font-medium">{item.title}</span>
+                      </div>
+                      {item.description ? (
+                        <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {event.gallery && event.gallery.length > 0 ? (
+              <div className="pt-6 border-t">
+                <ScrollingGallery
+                  images={event.gallery.map((image) => image.imageUrl)}
+                  accentColor="#2563eb"
+                />
+              </div>
+            ) : null}
+
             <div className="pt-6 border-t">
-              <Button 
-                className="w-full md:w-auto md:min-w-[200px]" 
-                size="lg"
-                onClick={handleAction}
-                disabled={isActionLoading || (isFull && !isJoined) || isPast}
-                variant={isJoined ? "outline" : "default"}
-              >
-                {isActionLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                {isPast ? "Event Ended" : 
-                 isJoined ? "Leave Event" : 
-                 isFull ? "Event Full" : 
-                 "Join Event"}
-              </Button>
+              <div className="rounded-xl border bg-secondary/20 p-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 font-medium text-foreground mb-2">
+                  <Info className="w-4 h-4 text-primary" />
+                  Event participation
+                </div>
+                <p>
+                  {isPast
+                    ? 'This event has ended. Public registration is not part of the current MVP.'
+                    : 'Public event registration is not part of the current MVP yet. Please contact the event organizer or CICT admin for participation details.'}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

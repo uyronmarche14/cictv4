@@ -4,16 +4,19 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Users,
   Newspaper,
   Megaphone,
+  HelpCircle,
   LogOut,
   UserCog,
   Menu,
-  Calendar
+  Calendar,
+  Building2 // New Import
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -21,48 +24,89 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>;
 
+type AdminRoute = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  active: boolean;
+  visible: boolean;
+};
+
+const buildRoutes = (
+  pathname: string,
+  permissions: {
+    canAccessOrganizationsModule: () => boolean;
+    canAccessUsersModule: () => boolean;
+    canAccessEventsModule: () => boolean;
+    canAccessNewsModule: () => boolean;
+    canAccessAnnouncementsModule: () => boolean;
+    canAccessRolesModule: () => boolean;
+    canManageSettings: () => boolean;
+  }
+): AdminRoute[] => [
+  {
+    href: '/admin/dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    active: pathname === '/admin/dashboard',
+    visible: true,
+  },
+  {
+    href: '/admin/organizations',
+    label: 'Organizations',
+    icon: Building2,
+    active: pathname.startsWith('/admin/organizations'),
+    visible: permissions.canAccessOrganizationsModule(),
+  },
+  {
+    href: '/admin/users',
+    label: 'Users',
+    icon: Users,
+    active: pathname.startsWith('/admin/users'),
+    visible: permissions.canAccessUsersModule(),
+  },
+  {
+    href: '/admin/events',
+    label: 'Events',
+    icon: Calendar,
+    active: pathname.startsWith('/admin/events'),
+    visible: permissions.canAccessEventsModule(),
+  },
+  {
+    href: '/admin/news',
+    label: 'News',
+    icon: Newspaper,
+    active: pathname.startsWith('/admin/news'),
+    visible: permissions.canAccessNewsModule(),
+  },
+  {
+    href: '/admin/announcements',
+    label: 'Announcements',
+    icon: Megaphone,
+    active: pathname.startsWith('/admin/announcements'),
+    visible: permissions.canAccessAnnouncementsModule(),
+  },
+  {
+    href: '/admin/roles',
+    label: 'Roles & Permissions',
+    icon: UserCog,
+    active: pathname.startsWith('/admin/roles'),
+    visible: permissions.canAccessRolesModule(),
+  },
+  {
+    href: '/admin/faq',
+    label: 'FAQ',
+    icon: HelpCircle,
+    active: pathname.startsWith('/admin/faq'),
+    visible: permissions.canManageSettings(),
+  },
+];
+
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-
-  const routes = [
-    {
-      href: '/admin/dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      active: pathname === '/admin/dashboard',
-    },
-    {
-      href: '/admin/users',
-      label: 'Users',
-      icon: Users,
-      active: pathname.startsWith('/admin/users'),
-    },
-    {
-       href: '/admin/events',
-       label: 'Events',
-       icon: Calendar,
-       active: pathname.startsWith('/admin/events'),
-    },
-    {
-      href: '/admin/news',
-      label: 'News',
-      icon: Newspaper,
-      active: pathname.startsWith('/admin/news'),
-    },
-    {
-      href: '/admin/announcements',
-      label: 'Announcements',
-      icon: Megaphone,
-      active: pathname.startsWith('/admin/announcements'),
-    },
-    {
-      href: '/admin/roles',
-      label: 'Roles & Permissions',
-      icon: UserCog,
-      active: pathname.startsWith('/admin/roles'),
-    },
-  ];
+  const permissions = usePermissions();
+  const visibleRoutes = buildRoutes(pathname, permissions).filter((route) => route.visible);
 
   return (
     <div className={cn("pb-12 min-h-screen border-r bg-gray-100/40 dark:bg-gray-800/40 hidden md:block w-64 fixed left-0 top-0 h-full", className)}>
@@ -72,7 +116,7 @@ export function Sidebar({ className }: SidebarProps) {
             CICT Admin
           </h2>
           <div className="space-y-1">
-            {routes.map((route) => (
+            {visibleRoutes.map((route) => (
               <Button
                 key={route.href}
                 variant={route.active ? "secondary" : "ghost"}
@@ -96,9 +140,14 @@ export function Sidebar({ className }: SidebarProps) {
           </Avatar>
           <div className="flex flex-col">
              <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
-             <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
+             <span className="text-xs text-muted-foreground">{user?.effectiveRoleLabel ?? user?.role}</span>
           </div>
         </div>
+        {user?.customRole ? (
+          <p className="mb-4 px-2 text-xs text-muted-foreground">
+            Base role: {user.baseRoleLabel}
+          </p>
+        ) : null}
         <Button 
             variant="outline" 
             className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"
@@ -116,39 +165,8 @@ export function MobileSidebar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
-
-    const routes = [
-    {
-      href: '/admin/dashboard',
-      label: 'Dashboard',
-      icon: LayoutDashboard,
-      active: pathname === '/admin/dashboard',
-    },
-    {
-      href: '/admin/users',
-      label: 'Users',
-      icon: Users,
-      active: pathname.startsWith('/admin/users'),
-    },
-    {
-      href: '/admin/news',
-      label: 'News',
-      icon: Newspaper,
-      active: pathname.startsWith('/admin/news'),
-    },
-    {
-      href: '/admin/announcements',
-      label: 'Announcements',
-      icon: Megaphone,
-      active: pathname.startsWith('/admin/announcements'),
-    },
-    {
-      href: '/admin/roles',
-      label: 'Roles & Permissions',
-      icon: UserCog,
-      active: pathname.startsWith('/admin/roles'),
-    },
-  ];
+  const permissions = usePermissions();
+  const visibleRoutes = buildRoutes(pathname, permissions).filter((route) => route.visible);
 
 
   return (
@@ -165,7 +183,7 @@ export function MobileSidebar() {
             CICT Admin
           </h2>
            <div className="space-y-1">
-            {routes.map((route) => (
+            {visibleRoutes.map((route) => (
               <Button
                 key={route.href}
                 variant={route.active ? "secondary" : "ghost"}
@@ -189,9 +207,14 @@ export function MobileSidebar() {
                 </Avatar>
                 <div className="flex flex-col">
                     <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
-                    <span className="text-xs text-muted-foreground capitalize">{user?.role}</span>
+                    <span className="text-xs text-muted-foreground">{user?.effectiveRoleLabel ?? user?.role}</span>
                 </div>
             </div>
+            {user?.customRole ? (
+              <p className="mb-4 text-xs text-muted-foreground">
+                Base role: {user.baseRoleLabel}
+              </p>
+            ) : null}
             <Button 
                 variant="outline" 
                 className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20"

@@ -51,7 +51,6 @@ export function RichTextEditor({
             class: 'mb-1',
           },
         },
-        link: false,
       }),
       Link.configure({
         openOnClick: true,

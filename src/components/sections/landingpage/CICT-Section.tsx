@@ -1,93 +1,128 @@
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Target, Eye, Brain } from "lucide-react";
+import React, { useState } from "react";
 import Image from "next/image";
-import logo from "@/lib/CICT.png";
+
+import PublicSectionHeader from "@/components/sections/landingpage/PublicSectionHeader";
+import { cn } from "@/lib/utils";
 
 const features = [
   {
-    title: "MISSSION",
-    icon: Target,
+    title: "Mission",
     description:
-      "Skip the manual tasks and complex setups. With Streamline, you can focus on what matters most while the system handles the rest.",
+      "To provide world-class education and training in information and communication technology, empowering students to become innovative leaders.",
   },
   {
-    title: "VISION",
-    icon: Eye,
+    title: "Vision",
     description:
-      "Dont overspend on unnecessary tools or teams. Keep your operations lean and efficient by automating your workflows with Streamline.",
+      "A premier institution recognized globally for excellence in ICT education, research, and community service.",
   },
   {
-    title: "PHILOSOPHY",
-    icon: Brain,
+    title: "Philosophy",
     description:
-      "Say goodbye to managing multiple platforms. Streamline takes care of all the heavy lifting, ensuring consistent results with minimal hassle.",
+      "We believe in the power of technology to transform lives and drive sustainable progress for a better future.",
   },
 ];
 
-const StreamlineSection = () => {
+const CICTSection = () => {
+  const [activeFeature, setActiveFeature] = useState(0);
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center py-16 px-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="flex flex-col lg:flex-row items-center justify-between mb-16 gap-12">
-          <div className="lg:w-1/2 space-y-4">
-            <p className="text-sm text-primary font-medium tracking-wider uppercase">
-              What is CICT?
-            </p>
-            <h2 className="text-balance text-4xl font-bold lg:text-5xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent leading-tight">
-              COLLEGE OF INFORMATION AND COMMUNICATION TECHNOLOGY
-            </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-md">
-              Streamline optimizes your workflow from start to finish. It
-              gathers information, generates reports, automates tasks, and
-              delivers results—all in one seamless system.
-            </p>
+    <section className="overflow-hidden bg-background py-20 text-foreground md:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
+
+          {/* ── Left: Image card ── */}
+          <div className="group relative min-h-[480px] overflow-hidden rounded-[2rem] border border-border/60 bg-card shadow-[0_30px_90px_-60px_rgba(15,23,42,0.5)] lg:min-h-[620px]">
+            <Image
+              src="https://res.cloudinary.com/ddnxfpziq/image/upload/v1755790148/529718384_122100992648966778_7029427848362639164_n_geskab.jpg"
+              alt="CICT students and faculty gathered during a campus event"
+              fill
+              className="object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+              priority
+            />
+
+            {/* top-to-mid fade for depth */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/80" />
+
+            {/* Bottom caption strip — mirrors the reference image's dark footer */}
+            <div className="absolute inset-x-0 bottom-0 border-t border-white/10 bg-background/80 px-6 py-5 backdrop-blur-md">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-primary">
+                Campus Community
+              </p>
+              <p className="mt-1.5 text-base font-semibold text-foreground">
+                Where learning meets leadership
+              </p>
+            </div>
           </div>
 
-          {/* Logo/Icon */}
-          <div className="lg:w-1/2 flex justify-center lg:justify-end">
-            <div className="relative w-48 h-48">
-              <Image
-                src={logo}
-                alt="CICT Logo"
-                width={218}
-                height={218}
-                className="object-contain drop-shadow-2xl"
-                priority
-              />
+          {/* ── Right: Text + feature cards ── */}
+          <div className="flex flex-col justify-center gap-8 lg:pl-2">
+            <PublicSectionHeader
+              eyebrow="College of Information and Communication Technology"
+              title="Shaping future-ready technology leaders"
+              description="CICT equips students with strong computing foundations, practical industry skills, and a collaborative campus culture built for innovation."
+              align="start"
+              className="max-w-none"
+              titleClassName="text-3xl md:text-4xl lg:text-[2.6rem] leading-[1.15]"
+              descriptionClassName="text-sm leading-7 md:text-base text-muted-foreground"
+            />
+
+            {/* Interactive Mission / Vision / Philosophy cards */}
+            <div className="grid gap-3">
+              {features.map((feature, idx) => {
+                const isActive = idx === activeFeature;
+
+                return (
+                  <button
+                    key={feature.title}
+                    type="button"
+                    onMouseEnter={() => setActiveFeature(idx)}
+                    onFocus={() => setActiveFeature(idx)}
+                    className={cn(
+                      "group flex rounded-[1.5rem] py-4 text-left transition-all duration-300 ",
+
+                    )}
+                  >
+                    <div className="flex w-full gap-4">
+                      {/* Dot indicator */}
+                      <div className="pt-[5px]">
+                        <span
+                          className={cn(
+                            "block h-2.5 w-2.5 rounded-full transition-colors duration-300",
+                            isActive ? "bg-primary" : "bg-primary/30"
+                          )}
+                        />
+                      </div>
+
+                      <div className="flex flex-1 flex-col">
+                        <h3
+                          className={cn(
+                            "text-base font-semibold tracking-[0.04em] transition-colors duration-200",
+                            isActive ? "text-foreground" : "text-foreground/75"
+                          )}
+                        >
+                          {feature.title}
+                        </h3>
+                        <p
+                          className={cn(
+                            "mt-2 text-sm leading-6 transition-colors duration-200",
+                            isActive
+                              ? "text-muted-foreground"
+                              : "text-muted-foreground/70"
+                          )}
+                        >
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card
-              key={index}
-              className="group relative border border-border bg-card hover:bg-card/95 shadow-sm hover:shadow-md transition-all duration-300 rounded-lg overflow-hidden shadow-md shadow-primary hover:shadow-xl hover:shadow-primary"
-            >
-              {/* Accent border */}
-              <div className="absolute inset-x-0 top-0 h-1 bg-primary transform origin-left transition-transform duration-300 group-hover:scale-x-100 scale-x-0" />
-
-              <CardContent className="relative p-6">
-                <div className="w-12 h-12 bg-primary/10 rounded-md flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors duration-300">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
-                  {feature.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
       </div>
     </section>
   );
 };
 
-export default StreamlineSection;
+export default CICTSection;

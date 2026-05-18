@@ -1,22 +1,53 @@
 import api from './axios';
+import { ContentOwnerType, ContentSection, EventScheduleItem, MediaAsset } from '@/types';
+
+export type EventMutationPayload = {
+  title: string;
+  bodyHtml: string;
+  description?: string;
+  excerpt: string;
+  startDate: string;
+  endDate: string;
+  location: string;
+  maxAttendees?: number;
+  tags?: string[];
+  isRegistrationOpen?: boolean;
+  ownerType?: ContentOwnerType;
+  organizationId?: string | null;
+  coverImage?: MediaAsset;
+  imageUrl?: string;
+  imageId?: string;
+  gallery?: MediaAsset[];
+  sections?: ContentSection[];
+  schedule?: EventScheduleItem[];
+};
 
 export interface Event {
   _id: string;
   title: string;
-  description: string;
+  description?: string;
+  bodyHtml: string;
   excerpt: string;
   organizer: {
-    _id: string;
+    id?: string;
+    _id?: string;
     firstName: string;
     lastName: string;
     email: string;
   };
+  ownerType: ContentOwnerType;
+  organizationId?: string | null;
+  organizationName?: string | null;
   startDate: string;
   endDate: string;
   location: string;
   status: 'draft' | 'published' | 'cancelled' | 'completed';
-  attendees: string[]; // IDs of attendees
+  attendees: Array<string | { id?: string; _id?: string }>;
   maxAttendees: number;
+  coverImage?: MediaAsset;
+  gallery: MediaAsset[];
+  sections: ContentSection[];
+  schedule: EventScheduleItem[];
   imageUrl?: string;
   tags: string[];
   isRegistrationOpen: boolean;
@@ -45,7 +76,15 @@ export interface SingleEventResponse {
 }
 
 export const eventAPI = {
-  getAll: async (params?: { page?: number; limit?: number; status?: string; search?: string; upcoming?: boolean }) => {
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    upcoming?: boolean;
+    ownerType?: ContentOwnerType | 'all';
+    organizationId?: string;
+  }) => {
     const response = await api.get<EventsResponse>('/events', { params });
     return response.data;
   },
@@ -55,13 +94,13 @@ export const eventAPI = {
     return response.data;
   },
 
-  create: async (data: any) => {
+  create: async (data: EventMutationPayload) => {
     // For FormData (image upload)
     const response = await api.post<SingleEventResponse>('/events', data);
     return response.data;
   },
 
-  update: async (id: string, data: any) => {
+  update: async (id: string, data: EventMutationPayload) => {
     const response = await api.put<SingleEventResponse>(`/events/${id}`, data);
     return response.data;
   },
@@ -71,19 +110,18 @@ export const eventAPI = {
     return response.data;
   },
 
-  join: async (id: string) => {
-    const response = await api.post<SingleEventResponse>(`/events/${id}/join`);
-    return response.data;
-  },
-
-  leave: async (id: string) => {
-    const response = await api.post<SingleEventResponse>(`/events/${id}/leave`);
-    return response.data;
-  },
-
   publish: async (id: string) => {
-       // Assuming publish is just an update to status, but if there's a specific endpoint:
-       // For now using update
-       return eventAPI.update(id, { status: 'published' });
-  }
+    const response = await api.patch<SingleEventResponse>(`/events/${id}/publish`);
+    return response.data;
+  },
+
+  cancel: async (id: string) => {
+    const response = await api.patch<SingleEventResponse>(`/events/${id}/cancel`);
+    return response.data;
+  },
+
+  complete: async (id: string) => {
+    const response = await api.patch<SingleEventResponse>(`/events/${id}/complete`);
+    return response.data;
+  },
 };

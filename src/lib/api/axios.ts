@@ -1,5 +1,4 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
@@ -11,10 +10,6 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     return config;
   },
   (error) => {
@@ -25,8 +20,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      Cookies.remove('token');
+    const shouldForceAdminLogout =
+      error.response?.status === 401 ||
+      (error.response?.status === 403 &&
+        ['Your account has been deactivated', 'User no longer exists', 'Your assigned role is no longer valid'].includes(
+          error.response?.data?.message
+        ));
+
+    if (shouldForceAdminLogout) {
       // Only redirect to admin login if we are actually in the admin section
       if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
         window.location.href = '/admin/login';

@@ -8,7 +8,7 @@ describe('Button component', () => {
     render(<Button onClick={handleClick}>Click me</Button>);
 
     const btn = screen.getByRole('button', { name: /click me/i });
-    expect(btn).toBeInTheDocument();
+    expect(btn).toBeTruthy();
 
     fireEvent.click(btn);
     expect(handleClick).toHaveBeenCalledTimes(1);
@@ -23,7 +23,7 @@ describe('Button component', () => {
     );
 
     const btn = screen.getByRole('button', { name: /disabled/i });
-    expect(btn).toBeDisabled();
+    expect(btn.getAttribute('disabled')).not.toBeNull();
 
     fireEvent.click(btn);
     expect(handleClick).not.toHaveBeenCalled();
@@ -37,10 +37,8 @@ describe('Button component', () => {
     );
 
     const link = screen.getByRole('link', { name: /go/i });
-    expect(link).toBeInTheDocument();
-    // Ensure href was preserved
-    expect(link).toHaveAttribute('href', '/about');
-    // The Button sets data-slot="button" on the rendered element via Slot
-    expect(link).toHaveAttribute('data-slot', 'button');
+    expect(link).toBeTruthy();
+    expect(link.getAttribute('href')).toBe('/about');
+    expect(link.getAttribute('data-slot')).toBe('button');
   });
 });

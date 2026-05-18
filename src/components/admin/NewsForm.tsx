@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -6,9 +6,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -22,26 +22,37 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { News, NewsStatus } from '@/types';
+  ContentOwnerType,
+  ContentSection,
+  MediaAsset,
+  News,
+  Organization,
+  Permission,
+} from '@/types';
 import api from '@/lib/api/axios';
 import { Loader2 } from 'lucide-react';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
+import { GalleryManager } from '@/components/admin/GalleryManager';
+import { uploadsAPI } from '@/lib/api/uploads';
+import { organizationService } from '@/services/organizationService';
+import { useAuth } from '@/context/AuthContext';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { sanitizeCoverAndGallery } from '@/lib/media';
 
 const newsSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  content: z.string().min(10, 'Content must be at least 10 characters'),
+  bodyHtml: z.string().min(10, 'Content must be at least 10 characters'),
   excerpt: z.string().min(5, 'Excerpt must be at least 5 characters'),
-  image: z.any().optional(),
-  status: z.nativeEnum(NewsStatus),
   tags: z.string().optional(),
 });
 
 type NewsFormValues = z.infer<typeof newsSchema>;
+type InputFieldProps = React.ComponentProps<typeof Input>;
+type TextareaFieldProps = React.ComponentProps<typeof Textarea>;
+type RichTextFieldProps = { value: string; onChange: (value: string) => void };
 
 interface NewsFormProps {
   open: boolean;
@@ -51,91 +62,215 @@ interface NewsFormProps {
 }
 
 export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps) {
+  const { user } = useAuth();
+  const { hasPermission, hasAnyScopedPermission } = usePermissions();
   const [loading, setLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(news?.imageUrl || null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const canCreateSystemOwnedContent = hasPermission(Permission.CREATE_NEWS);
+  const canCreateScopedNews = hasAnyScopedPermission(Permission.CREATE_NEWS);
+  const scopedCreateOrganizationIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (user?.organizationAssignments ?? [])
+            .filter((assignment) => assignment.permissions.includes(Permission.CREATE_NEWS))
+            .map((assignment) => assignment.organizationId)
+        )
+      ),
+    [user?.organizationAssignments]
+  );
+  const [ownerType, setOwnerType] = useState<ContentOwnerType>(
+    news?.ownerType ??
+      (scopedCreateOrganizationIds.length > 0
+        ? ContentOwnerType.ORGANIZATION
+        : canCreateSystemOwnedContent
+          ? ContentOwnerType.SYSTEM
+          : ContentOwnerType.ORGANIZATION)
+  );
+  const [organizationId, setOrganizationId] = useState(news?.organizationId ?? '');
+  const [coverImage, setCoverImage] = useState<MediaAsset | undefined>(
+    news?.coverImage ??
+      (news?.imageUrl
+        ? {
+            imageUrl: news.imageUrl,
+            alt: news.title,
+          }
+        : undefined)
+  );
+  const [gallery, setGallery] = useState<MediaAsset[]>(news?.gallery ?? []);
+  const [sections, setSections] = useState<ContentSection[]>(news?.sections ?? []);
 
   const form = useForm<NewsFormValues>({
     resolver: zodResolver(newsSchema),
-    defaultValues: {
-      title: news?.title || '',
-      content: news?.content || '',
-      excerpt: news?.excerpt || '',
-      status: news?.status || NewsStatus.DRAFT,
-      tags: news?.tags?.join(', ') || '',
-    },
+    defaultValues: useMemo(
+      () => ({
+        title: news?.title || '',
+        bodyHtml: news?.bodyHtml || news?.content || '',
+        excerpt: news?.excerpt || '',
+        tags: news?.tags?.join(', ') || '',
+      }),
+      [news]
+    ),
   });
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue('image', file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    const fetchOrganizations = async () => {
+      try {
+        const data = await organizationService.getAll();
+        setOrganizations(data);
+      } catch (error) {
+        console.error('Failed to fetch organizations for news ownership:', error);
+      }
+    };
+
+    fetchOrganizations();
+  }, [open]);
+
+  const availableOrganizations = useMemo(() => {
+    if (canCreateSystemOwnedContent) {
+      return organizations;
+    }
+
+    const allowedIds = new Set(scopedCreateOrganizationIds);
+
+    return organizations.filter((organization) => allowedIds.has(organization.id));
+  }, [canCreateSystemOwnedContent, organizations, scopedCreateOrganizationIds]);
+
+  const preferredOrganizations = useMemo(() => {
+    const scopedOrganizations = organizations.filter((organization) =>
+      scopedCreateOrganizationIds.includes(organization.id)
+    );
+
+    return scopedOrganizations.length > 0 ? scopedOrganizations : availableOrganizations;
+  }, [availableOrganizations, organizations, scopedCreateOrganizationIds]);
+
+  const selectedOrganizationName =
+    organizations.find((organization) => organization.id === organizationId)?.name ?? 'selected organization';
+
+  useEffect(() => {
+    if (news) {
+      setOwnerType(news.ownerType);
+      setOrganizationId(news.organizationId ?? '');
+      return;
+    }
+
+    const defaultOwnerType =
+      scopedCreateOrganizationIds.length > 0
+        ? ContentOwnerType.ORGANIZATION
+        : canCreateSystemOwnedContent
+          ? ContentOwnerType.SYSTEM
+          : ContentOwnerType.ORGANIZATION;
+
+    setOwnerType(defaultOwnerType);
+    setOrganizationId(
+      defaultOwnerType === ContentOwnerType.ORGANIZATION
+        ? preferredOrganizations[0]?.id ?? ''
+        : ''
+    );
+  }, [news, canCreateSystemOwnedContent, open, preferredOrganizations, scopedCreateOrganizationIds]);
+
+  useEffect(() => {
+    if (ownerType === ContentOwnerType.SYSTEM) {
+      setOrganizationId('');
+      return;
+    }
+
+    if (
+      (!organizationId || !availableOrganizations.some((organization) => organization.id === organizationId)) &&
+      preferredOrganizations.length > 0
+    ) {
+      setOrganizationId(preferredOrganizations[0].id);
+    }
+  }, [ownerType, organizationId, availableOrganizations, preferredOrganizations]);
+
+  useEffect(() => {
+    if (!coverImage || gallery.length === 0) {
+      return;
+    }
+
+    const { gallery: sanitizedGallery, removedDuplicates } = sanitizeCoverAndGallery(
+      coverImage,
+      gallery
+    );
+
+    if (removedDuplicates > 0) {
+      setGallery(sanitizedGallery);
+      toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.');
+    }
+  }, [coverImage, gallery]);
+
+  const handleCoverImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const [uploadedImage] = await uploadsAPI.uploadImages([file]);
+      setCoverImage({
+        ...uploadedImage,
+        alt: uploadedImage.alt || news?.title || 'News cover image',
+      });
+    } catch (error) {
+      console.error('Failed to upload cover image:', error);
+    } finally {
+      setUploadingCover(false);
     }
   };
 
   const onSubmit = async (data: NewsFormValues) => {
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('title', data.title);
-      formData.append('content', data.content);
-      formData.append('excerpt', data.excerpt);
-      formData.append('status', data.status);
-      
-      if (data.tags) {
-        const tagsArray = data.tags.split(',').map(tag => tag.trim()).filter(Boolean);
-        tagsArray.forEach(tag => formData.append('tags', tag));
-      }
-      
-      if (data.image) {
-        formData.append('image', data.image);
+      if (ownerType === ContentOwnerType.ORGANIZATION && !organizationId) {
+        form.setError('root', {
+          message: 'Select the organization that should own this news article.',
+        });
+        setLoading(false);
+        return;
       }
 
-      const config = {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const { gallery: sanitizedGallery, removedDuplicates } = sanitizeCoverAndGallery(
+        coverImage,
+        gallery
+      );
+      if (removedDuplicates > 0) {
+        setGallery(sanitizedGallery);
+        toast.info('Duplicate gallery images matching the cover image were removed automatically.');
+      }
+
+      const payload = {
+        title: data.title,
+        bodyHtml: data.bodyHtml,
+        content: data.bodyHtml,
+        excerpt: data.excerpt,
+        ownerType,
+        organizationId: ownerType === ContentOwnerType.ORGANIZATION ? organizationId : null,
+        tags: data.tags ? data.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        coverImage,
+        imageUrl: coverImage?.imageUrl,
+        imageId: coverImage?.imageId,
+        gallery: sanitizedGallery,
+        sections,
       };
 
       if (news) {
-        await api.put(`/news/${news._id}`, formData, config);
+        await api.put(`/news/${news._id}`, payload);
       } else {
-        await api.post('/news', formData, config);
+        await api.post('/news', payload);
       }
+
       onSuccess();
       onOpenChange(false);
       form.reset();
-      setImagePreview(null);
+      setCoverImage(undefined);
+      setGallery([]);
+      setSections([]);
     } catch (error: unknown) {
       console.error('Failed to save news:', error);
-      
-      let handled = false;
-      if (typeof error === 'object' && error !== null && 'response' in error) {
-        const errorObj = error as { response?: { data?: { errors?: Array<{ path: string; msg: string }>, message?: string } } };
-        
-        if (errorObj.response?.data?.errors && Array.isArray(errorObj.response.data.errors)) {
-          errorObj.response.data.errors.forEach((err) => {
-            // @ts-expect-error - Dynamic field access
-            form.setError(err.path, { message: err.msg });
-          });
-          handled = true;
-        } else if (errorObj.response?.data?.message) {
-          form.setError('root', {
-            message: errorObj.response.data.message,
-          });
-          handled = true;
-        }
-      }
-
-      if (!handled) {
-        form.setError('root', {
-           message: 'Something went wrong',
-         });
-      }
+      form.setError('root', { message: 'Failed to save news article' });
     } finally {
       setLoading(false);
     }
@@ -143,19 +278,19 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[840px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{news ? 'Edit News Article' : 'Create News Article'}</DialogTitle>
           <DialogDescription>
-            {news ? 'Update existing news article details.' : 'Add a new news article to the system.'}
+            {news ? 'Update the article body, structure, and gallery.' : 'Add a new structured news article to the system.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
               name="title"
-              render={({ field }) => (
+              render={({ field }: { field: InputFieldProps }) => (
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
@@ -166,10 +301,68 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
               )}
             />
 
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <FormLabel>Content Ownership</FormLabel>
+                <Select
+                  value={ownerType}
+                  onValueChange={(value) => setOwnerType(value as ContentOwnerType)}
+                  disabled={!canCreateSystemOwnedContent}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select ownership" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {canCreateSystemOwnedContent ? (
+                      <SelectItem value={ContentOwnerType.SYSTEM}>System-owned</SelectItem>
+                    ) : null}
+                    <SelectItem value={ContentOwnerType.ORGANIZATION}>Organization-owned</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Organization pages only surface published organization-owned posts. Use system-owned only for college-wide content.
+                </p>
+              </div>
+
+              {ownerType === ContentOwnerType.ORGANIZATION ? (
+                <div className="space-y-2">
+                  <FormLabel>Publish To Organization</FormLabel>
+                  <Select value={organizationId} onValueChange={setOrganizationId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableOrganizations.map((organization) => (
+                        <SelectItem key={organization.id} value={organization.id}>
+                          {organization.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!canCreateScopedNews && !canCreateSystemOwnedContent ? (
+                    <p className="text-xs text-destructive">
+                      You do not currently have permission to publish news for any organization.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm">
+              <p className="font-medium text-foreground">
+                {ownerType === ContentOwnerType.SYSTEM
+                  ? 'This news article will appear as a system-wide CICT update.'
+                  : `This news article will appear under ${selectedOrganizationName} once published.`}
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Pick organization-owned content for posts that should show up on student organization tabs and organization homepages.
+              </p>
+            </div>
+
             <FormField
               control={form.control}
               name="excerpt"
-              render={({ field }) => (
+              render={({ field }: { field: TextareaFieldProps }) => (
                 <FormItem>
                   <FormLabel>Excerpt</FormLabel>
                   <FormControl>
@@ -182,98 +375,82 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
 
             <FormField
               control={form.control}
-              name="content"
-              render={({ field }) => (
+              name="bodyHtml"
+              render={({ field }: { field: RichTextFieldProps }) => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>Article Body</FormLabel>
                   <FormControl>
-                    <Textarea className="h-32" placeholder="Full content..." {...field} />
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Write the article content..."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={NewsStatus.DRAFT}>Draft</SelectItem>
-                        <SelectItem value={NewsStatus.PUBLISHED}>Published</SelectItem>
-                        <SelectItem value={NewsStatus.ARCHIVED}>Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Comma separated tags" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <ContentSectionsEditor sections={sections} onChange={setSections} />
 
             <FormField
               control={form.control}
-              name="image"
-              render={({ field: { onChange, ...field } }) => (
+              name="tags"
+              render={({ field }: { field: InputFieldProps }) => (
                 <FormItem>
-                  <FormLabel>Featured Image (Optional)</FormLabel>
+                  <FormLabel>Tags</FormLabel>
                   <FormControl>
-                    <div className="flex flex-col gap-4">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          handleImageChange(e);
-                          onChange(e.target.files?.[0]);
-                        }}
-                        {...field}
-                        value={undefined}
-                      />
-                      {imagePreview && (
-                        <div className="relative w-full h-48 rounded-md overflow-hidden border">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={imagePreview}
-                            alt="Preview"
-                            className="object-cover w-full h-full"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <Input placeholder="Comma separated tags" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="space-y-3">
+              <FormLabel>Cover Image</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                The cover image is the hero image used on cards and detail pages. Do not reuse it as a gallery image.
+              </p>
+              <Input type="file" accept="image/*" onChange={handleCoverImageChange} />
+              {uploadingCover ? <p className="text-sm text-muted-foreground">Uploading cover image...</p> : null}
+              {coverImage ? (
+                <div className="overflow-hidden rounded-md border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverImage.imageUrl} alt={coverImage.alt} className="h-56 w-full object-cover" />
+                </div>
+              ) : null}
+            </div>
+
+            <GalleryManager
+              label="Supporting Gallery"
+              coverImage={coverImage}
+              gallery={gallery}
+              onChange={setGallery}
+              onDuplicateRemoval={() =>
+                toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.')
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Gallery images appear below the article body as supporting media only. The system removes any gallery image that duplicates the cover image.
+            </p>
+
+            {news ? (
+              <p className="text-sm text-muted-foreground">
+                Current workflow status: <span className="font-medium capitalize">{news.status}</span>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                New articles are created as drafts and must be published separately.
+              </p>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {news ? 'Update' : 'Create'}
               </Button>
             </DialogFooter>

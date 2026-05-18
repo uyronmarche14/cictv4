@@ -1,6 +1,8 @@
-import { User } from '@/types/User';
+import type { User } from '@/types';
 
-const BASE_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+).replace(/\/$/, '');
 export async function refreshToken(
   currentRefreshToken: string
 ): Promise<{ accessToken: string; refreshToken: string; user: User } | null> {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   Bell,
   Calendar,
@@ -13,18 +14,23 @@ import {
 import { useGetAnnouncements } from '@/hooks/ui/announcement/get-announcements.hook';
 
 import { AnnouncementType } from '@/types/Announcement';
-import { useRouter } from 'next/navigation';
+import { ContentOwnerType } from '@/types';
 
 type AnnouncementsCarouselProps = {
   autoAdvanceInterval?: number;
   limit?: number;
+  title?: string;
+  ownerType?: ContentOwnerType;
+  organizationId?: string;
 };
 
 export default function AnnouncementsCarousel({
   autoAdvanceInterval = 5000,
   limit = 10,
+  title = 'Campus Announcements',
+  ownerType,
+  organizationId,
 }: AnnouncementsCarouselProps) {
-  const router = useRouter();
   const [currentAnnouncement, setCurrentAnnouncement] = useState(0);
 
   // Fetch announcements from API
@@ -32,7 +38,7 @@ export default function AnnouncementsCarousel({
     data: announcementsData,
     isLoading,
     error,
-  } = useGetAnnouncements(1, limit, undefined, undefined, true);
+  } = useGetAnnouncements(1, limit, undefined, undefined, true, ownerType, organizationId);
 
   const announcements = announcementsData?.data || [];
 
@@ -49,12 +55,12 @@ export default function AnnouncementsCarousel({
 
   const getAnnouncementIcon = (type: AnnouncementType) => {
     switch (type) {
-      case AnnouncementType.NOTICE:
+      case AnnouncementType.EMERGENCY:
         return AlertTriangle;
       case AnnouncementType.EVENT:
         return Bell;
-      case AnnouncementType.ANNOUNCEMENT:
-      case AnnouncementType.OTHER:
+      case AnnouncementType.ACADEMIC:
+      case AnnouncementType.GENERAL:
       default:
         return Info;
     }
@@ -62,12 +68,12 @@ export default function AnnouncementsCarousel({
 
   const getAnnouncementBadgeVariant = (type: AnnouncementType) => {
     switch (type) {
-      case AnnouncementType.NOTICE:
+      case AnnouncementType.EMERGENCY:
         return 'destructive' as const;
       case AnnouncementType.EVENT:
         return 'default' as const;
-      case AnnouncementType.ANNOUNCEMENT:
-      case AnnouncementType.OTHER:
+      case AnnouncementType.ACADEMIC:
+      case AnnouncementType.GENERAL:
       default:
         return 'secondary' as const;
     }
@@ -92,7 +98,7 @@ export default function AnnouncementsCarousel({
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 font-serif">
             <Bell className="h-5 w-5 text-primary" />
-            Campus Announcements
+            {title}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -113,7 +119,7 @@ export default function AnnouncementsCarousel({
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 font-serif">
             <Bell className="h-5 w-5 text-primary" />
-            Campus Announcements
+            {title}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -133,7 +139,7 @@ export default function AnnouncementsCarousel({
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 font-serif">
             <Bell className="h-5 w-5 text-primary" />
-            Campus Announcements
+            {title}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -152,7 +158,7 @@ export default function AnnouncementsCarousel({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 font-serif">
             <Bell className="h-5 w-5 text-primary" />
-            Campus Announcements
+            {title}
           </CardTitle>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
@@ -225,12 +231,12 @@ export default function AnnouncementsCarousel({
                   </div>
 
                   {/* Image */}
-                  {announcement.imageUrl && (
+                  {(announcement.coverImage?.imageUrl || announcement.imageUrl) && (
                     <div className="relative rounded-lg overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={announcement.imageUrl}
-                        alt={announcement.title}
+                        src={announcement.coverImage?.imageUrl || announcement.imageUrl}
+                        alt={announcement.coverImage?.alt || announcement.title}
                         className="w-full h-48 object-cover"
                         loading="lazy"
                       />
@@ -243,24 +249,26 @@ export default function AnnouncementsCarousel({
                     <p
                       className="text-muted-foreground leading-relaxed line-clamp-2"
                       dangerouslySetInnerHTML={{
-                        __html: announcement.content,
+                        __html: announcement.bodyHtml || announcement.content || '',
                       }}
                     />
+                    {announcement.sections?.length ? (
+                      <p className="text-xs text-muted-foreground">
+                        Includes {announcement.sections.length} structured section
+                        {announcement.sections.length > 1 ? 's' : ''}
+                        {announcement.gallery?.length
+                          ? ` and ${announcement.gallery.length} gallery image${announcement.gallery.length > 1 ? 's' : ''}`
+                          : ''}
+                      </p>
+                    ) : null}
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-muted-foreground">
-                        By {announcement.author.profile.firstName}{' '}
-                        {announcement.author.profile.lastName}
+                        By {typeof announcement.author === 'string'
+                          ? 'CICT Staff'
+                          : `${announcement.author.firstName} ${announcement.author.lastName}`}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          router.push(
-                            `/dashboard/announcements/${announcement._id}`
-                          )
-                        }
-                      >
-                        View Details
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/announcements/${announcement._id}`}>View details</Link>
                       </Button>
                     </div>
                   </div>

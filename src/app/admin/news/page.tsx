@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api/axios';
-import { News, NewsStatus } from '@/types';
+import { ContentOwnerType, News, NewsStatus } from '@/types';
 import { NewsForm } from '@/components/admin/NewsForm';
 import {
   Table,
@@ -24,20 +24,59 @@ import { MoreHorizontal, Plus, Search, Trash, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { Permission } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { getOwnershipLabel } from '@/lib/content-ownership';
+import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 
 export default function NewsPage() {
+  const {
+    hasPermission,
+    hasScopedPermission,
+    hasAnyScopedPermission,
+    canAccessNewsModule,
+    getScopedOrganizationIdsForPermissions,
+  } = usePermissions();
+  const { organizations } = useOrganizations();
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
+    hasPermission(Permission.VIEW_NEWS) ? 'all' : ContentOwnerType.ORGANIZATION
+  );
+  const [organizationFilter, setOrganizationFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
+  const { shouldRender } = useAdminPageAccess(canAccessNewsModule());
+  const canViewAllNews = hasPermission(Permission.VIEW_NEWS);
+  const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
+    Permission.VIEW_NEWS,
+    Permission.CREATE_NEWS,
+    Permission.EDIT_NEWS,
+    Permission.DELETE_NEWS,
+    Permission.PUBLISH_NEWS,
+    Permission.ARCHIVE_NEWS,
+  ]);
+  const availableOrganizations = canViewAllNews
+    ? organizations
+    : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
 
   const fetchNews = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/news?page=${page}&limit=10&search=${search}`);
+      const response = await api.get('/news', {
+        params: {
+          page,
+          limit: 10,
+          search,
+          ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
+          organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
+        },
+      });
       if (response.data.success) {
         setNews(response.data.data.news);
         setTotalPages(response.data.data.pagination.pages);
@@ -47,11 +86,44 @@ export default function NewsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, ownerTypeFilter, organizationFilter]);
+
+  const canActOnNews = (item: News, permission: Permission) =>
+    hasPermission(permission) ||
+    (item.ownerType === ContentOwnerType.ORGANIZATION &&
+      !!item.organizationId &&
+      hasScopedPermission(item.organizationId, permission));
 
   useEffect(() => {
     fetchNews();
   }, [fetchNews]);
+
+  useEffect(() => {
+    if (canViewAllNews) {
+      return;
+    }
+
+    if (ownerTypeFilter !== ContentOwnerType.ORGANIZATION) {
+      setOwnerTypeFilter(ContentOwnerType.ORGANIZATION);
+    }
+  }, [canViewAllNews, ownerTypeFilter]);
+
+  useEffect(() => {
+    if (canViewAllNews) {
+      return;
+    }
+
+    if (
+      organizationFilter !== 'all' &&
+      !availableOrganizations.some((organization) => organization.id === organizationFilter)
+    ) {
+      setOrganizationFilter('all');
+    }
+  }, [availableOrganizations, canViewAllNews, organizationFilter]);
+
+  if (!shouldRender) {
+    return null;
+  }
 
   const handleCreate = () => {
     setSelectedNews(null);
@@ -71,6 +143,15 @@ export default function NewsPage() {
       fetchNews();
     } catch (error) {
       console.error('Failed to delete news:', error);
+    }
+  };
+
+  const handleWorkflowAction = async (id: string, action: 'publish' | 'archive') => {
+    try {
+      await api.patch(`/news/${id}/${action}`);
+      fetchNews();
+    } catch (error) {
+      console.error(`Failed to ${action} news:`, error);
     }
   };
 
@@ -96,9 +177,11 @@ export default function NewsPage() {
             Manage news articles and updates
           </p>
         </div>
-        <Button onClick={handleCreate}>
+        {hasPermission(Permission.CREATE_NEWS) || hasAnyScopedPermission(Permission.CREATE_NEWS) ? (
+          <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" /> Create News
-        </Button>
+          </Button>
+        ) : null}
       </div>
 
       <Card>
@@ -115,6 +198,37 @@ export default function NewsPage() {
                   className="pl-8 w-[250px]"
                 />
               </div>
+              <Select
+                value={ownerTypeFilter}
+                onValueChange={(value: 'all' | ContentOwnerType) => setOwnerTypeFilter(value)}
+                disabled={!canViewAllNews}
+              >
+                <SelectTrigger className="w-[170px]">
+                  <SelectValue placeholder="Ownership" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canViewAllNews ? <SelectItem value="all">All ownership</SelectItem> : null}
+                  {canViewAllNews ? (
+                    <SelectItem value={ContentOwnerType.SYSTEM}>System-owned</SelectItem>
+                  ) : null}
+                  <SelectItem value={ContentOwnerType.ORGANIZATION}>Organization-owned</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={organizationFilter} onValueChange={setOrganizationFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {canViewAllNews ? 'All organizations' : 'Assigned organizations'}
+                  </SelectItem>
+                  {availableOrganizations.map((organization) => (
+                    <SelectItem key={organization.id} value={organization.id}>
+                      {organization.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -125,6 +239,7 @@ export default function NewsPage() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Ownership</TableHead>
                   <TableHead>Tags</TableHead>
                   <TableHead>Created At</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -133,13 +248,13 @@ export default function NewsPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : news.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       No news articles found.
                     </TableCell>
                   </TableRow>
@@ -148,6 +263,11 @@ export default function NewsPage() {
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {getOwnershipLabel(item)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {item.tags.map((tag, index) => (
@@ -167,10 +287,27 @@ export default function NewsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(item)}>
+                            <DropdownMenuItem
+                              disabled={!canActOnNews(item, Permission.EDIT_NEWS)}
+                              onClick={() => handleEdit(item)}
+                            >
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item._id)}>
+                            {item.status === NewsStatus.DRAFT && canActOnNews(item, Permission.PUBLISH_NEWS) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'publish')}>
+                                Publish
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.PUBLISHED && canActOnNews(item, Permission.ARCHIVE_NEWS) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'archive')}>
+                                Archive
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              disabled={!canActOnNews(item, Permission.DELETE_NEWS)}
+                              className="text-red-600"
+                              onClick={() => handleDelete(item._id)}
+                            >
                               <Trash className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>

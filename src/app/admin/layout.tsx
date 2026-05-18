@@ -11,7 +11,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { loading, isAuthenticated, canAccessAdmin } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const isLoginPage = pathname === '/admin/login';
@@ -23,14 +23,10 @@ export default function AdminLayout({
 
     if (!isAuthenticated) {
       router.push('/admin/login');
-    } else {
-      // Update role check to include full_admin
-      const userRole = user?.role ? String(user.role) : '';
-      if (userRole !== 'admin' && userRole !== 'superadmin' && userRole !== 'full_admin') {
-        router.push('/'); // Redirect unauthorized users to home
-      }
+    } else if (!canAccessAdmin) {
+      router.push('/');
     }
-  }, [loading, isAuthenticated, user, router, isLoginPage]);
+  }, [loading, isAuthenticated, canAccessAdmin, router, isLoginPage]);
 
   // Allow access to login page without checks
   if (isLoginPage) {
@@ -45,9 +41,7 @@ export default function AdminLayout({
     );
   }
 
-  // Update render check as well
-  const userRole = user?.role ? String(user.role) : '';
-  if (!isAuthenticated || (userRole !== 'admin' && userRole !== 'superadmin' && userRole !== 'full_admin')) {
+  if (!isAuthenticated || !canAccessAdmin) {
     return null; // Don't render anything while redirecting
   }
 

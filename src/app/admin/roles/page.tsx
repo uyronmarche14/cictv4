@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import api from '@/lib/api/axios';
 import { Role } from '@/types';
 import {
   Table,
@@ -12,19 +11,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Plus, Trash, Edit, Shield } from "lucide-react";
+import { Shield, Plus, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { rolesAPI } from '@/lib/api/roles';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { RoleFormDialog } from '@/components/admin/RoleFormDialog';
+import { usePermissionMetadata } from '@/hooks/use-permission-metadata';
+import { toast } from 'sonner';
+import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 
 export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const { canCreateRole, canUpdateRole, canDeleteRole, canAccessRolesModule } = usePermissions();
+  const { groups: permissionGroups } = usePermissionMetadata();
+  const { shouldRender } = useAdminPageAccess(canAccessRolesModule());
 
   useEffect(() => {
     fetchRoles();
@@ -33,10 +37,8 @@ export default function RolesPage() {
   const fetchRoles = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/roles');
-      if (response.data.success) {
-        setRoles(response.data.data.roles);
-      }
+      const data = await rolesAPI.getAll();
+      setRoles(data);
     } catch (error) {
       console.error('Failed to fetch roles:', error);
     } finally {
@@ -44,16 +46,25 @@ export default function RolesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this role?')) return;
-    
+  const handleDelete = async (role: Role) => {
+    if (!role.isDeletable) {
+      return;
+    }
+
+    if (!confirm(`Delete custom role "${role.name}"?`)) return;
+
     try {
-      await api.delete(`/roles/${id}`);
+      await rolesAPI.delete(role.id);
       fetchRoles();
     } catch (error) {
       console.error('Failed to delete role:', error);
+      toast.error('This role is still assigned to users. Reassign those users before deleting it.');
     }
   };
+
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">
@@ -61,12 +72,19 @@ export default function RolesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Roles & Permissions</h1>
           <p className="text-muted-foreground">
-            Manage system roles and access levels
+            Manage system and custom roles in one permission matrix
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Create Role
-        </Button>
+        {canCreateRole() ? (
+          <Button
+            onClick={() => {
+              setSelectedRole(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <Plus className="mr-2 h-4 w-4" /> Create Custom Role
+          </Button>
+        ) : null}
       </div>
 
       <Card>
@@ -82,7 +100,7 @@ export default function RolesPage() {
                   <TableHead>Description</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Permissions</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">Scope</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,7 +118,7 @@ export default function RolesPage() {
                   </TableRow>
                 ) : (
                   roles.map((role) => (
-                    <TableRow key={role._id}>
+                    <TableRow key={role.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           <Shield className="h-4 w-4 text-muted-foreground" />
@@ -109,37 +127,64 @@ export default function RolesPage() {
                       </TableCell>
                       <TableCell>{role.description}</TableCell>
                       <TableCell>
-                        <Badge variant={role.isSystemRole ? 'secondary' : 'outline'}>
-                          {role.isSystemRole ? 'System' : 'Custom'}
+                        <Badge variant={role.kind === 'system' ? 'secondary' : 'outline'}>
+                          {role.kind === 'system' ? 'Built-in' : 'Custom'}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-muted-foreground text-sm">
-                          {role.permissions.length} permissions
-                        </span>
+                        <div className="space-y-1">
+                          <span className="text-muted-foreground text-sm">
+                            {role.permissions.length} permissions
+                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {permissionGroups
+                              .filter((group) =>
+                                group.permissions.some((permission) =>
+                                  role.permissions.includes(permission.value)
+                                )
+                              )
+                              .map((group) => (
+                                <Badge key={group.label} variant="outline" className="text-[10px]">
+                                  {group.label}
+                                </Badge>
+                              ))}
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            {!role.isSystemRole && (
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => handleDelete(role._id)}
+                        <div className="flex justify-end gap-2">
+                          {role.kind === 'system' ? (
+                            <div className="text-right">
+                              <span className="text-sm text-muted-foreground">Code managed</span>
+                              <p className="text-xs text-muted-foreground">
+                                {role.systemRoleKey?.replace('_', ' ')}
+                              </p>
+                            </div>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={!canUpdateRole() || !role.isEditable}
+                                onClick={() => {
+                                  setSelectedRole(role);
+                                  setIsDialogOpen(true);
+                                }}
                               >
-                                <Trash className="mr-2 h-4 w-4" /> Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-600"
+                                disabled={!canDeleteRole() || !role.isDeletable}
+                                onClick={() => handleDelete(role)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -149,6 +194,13 @@ export default function RolesPage() {
           </div>
         </CardContent>
       </Card>
+
+      <RoleFormDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        role={selectedRole}
+        onSuccess={fetchRoles}
+      />
     </div>
   );
 }

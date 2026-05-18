@@ -2,11 +2,11 @@
 
 import { motion } from 'framer-motion';
 import { OrganizationPage } from '@/lib/data/organizationPages';
-import { Organization } from '@/components/organizations/organizationData';
+import { OrganizationMember } from '@/types';
 import MemberCard from '@/components/organizations/MemberCard';
 
 interface TeamSectionProps {
-  members: Organization['members'];
+  members: OrganizationMember[];
   color: OrganizationPage['color'];
   orgName: string;
 }

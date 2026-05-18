@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { OrganizationPage } from '@/lib/data/organizationPages';
 
@@ -56,15 +56,13 @@ export default function ProgramsTabs({ programs, color }: ProgramsTabsProps) {
 
         {/* Right Side: Content */}
         <div className="w-full lg:w-2/3">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="h-full flex flex-col rounded-md border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden"
-            >
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.2 }}
+            className="h-full flex flex-col rounded-md border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden"
+          >
               {/* Image Area */}
               <div className="relative h-48 sm:h-64 w-full bg-muted/30">
                  <div className="absolute inset-0 flex items-center justify-center">
@@ -102,8 +100,7 @@ export default function ProgramsTabs({ programs, color }: ProgramsTabsProps) {
                     </div>
                  </div>
               </div>
-            </motion.div>
-          </AnimatePresence>
+          </motion.div>
         </div>
       </div>
     </section>

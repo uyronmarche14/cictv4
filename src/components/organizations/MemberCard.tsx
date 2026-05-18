@@ -2,15 +2,13 @@
 
 import { useState } from 'react';
 import { CldImage } from 'next-cloudinary';
-import { OrganizationMember } from './organizationData';
+import { OrganizationMember } from '@/types';
 import { cn } from '@/lib/utils';
+import { OrganizationPage } from '@/lib/data/organizationPages';
 
 interface MemberCardProps {
   member: OrganizationMember;
-  organizationColor: {
-    primary: string;
-    secondary: string;
-  };
+  organizationColor: OrganizationPage['color'];
   onClick: () => void;
 }
 

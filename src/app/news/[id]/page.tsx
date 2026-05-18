@@ -4,12 +4,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Calendar, User, Tag, Share2, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import ContactCTASection from '@/components/CTASection';
 import { useNewsById } from '@/hooks/use-news-by-id';
 import { useNews } from '@/hooks/use-news';
 import { NewsStatus } from '@/types';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { StructuredContent } from '@/components/StructuredContent';
+import ScrollingGallery from '@/components/ScrollingGallery';
+import { getOwnershipLabel } from '@/lib/content-ownership';
 
 export default function NewsDetailPage() {
   const params = useParams();
@@ -52,6 +54,10 @@ export default function NewsDetailPage() {
 
   const relatedArticles = relatedData?.news.filter(a => a._id !== newsId).slice(0, 3) || [];
 
+  const heroImage = article.coverImage?.imageUrl || article.imageUrl;
+  const articleBody = article.bodyHtml || article.content || '';
+  const galleryImages = article.gallery?.map((image) => image.imageUrl) ?? [];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Main Content */}
@@ -63,6 +69,9 @@ export default function NewsDetailPage() {
 
         {/* Meta Info */}
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-8">
+          <Badge variant="outline">
+            {getOwnershipLabel(article)}
+          </Badge>
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
             <span>{author}</span>
@@ -79,12 +88,12 @@ export default function NewsDetailPage() {
         </div>
 
         {/* Featured Image */}
-        {article.imageUrl && (
+        {heroImage && (
           <div className="relative aspect-video rounded-2xl overflow-hidden mb-8 shadow-2xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={article.imageUrl}
-              alt={article.title}
+              src={heroImage}
+              alt={article.coverImage?.alt || article.title}
               className="object-cover w-full h-full"
             />
           </div>
@@ -96,13 +105,13 @@ export default function NewsDetailPage() {
         </div>
 
         {/* Content */}
-        <div className="prose prose-lg max-w-none mb-12">
-          {article.content.split('\n\n').map((paragraph, idx) => (
-            <p key={idx} className="text-foreground leading-relaxed mb-6">
-              {paragraph}
-            </p>
-          ))}
-        </div>
+        <StructuredContent bodyHtml={articleBody} sections={article.sections} className="mb-12" />
+
+        {galleryImages.length > 0 ? (
+          <div className="mb-12">
+            <ScrollingGallery images={galleryImages} accentColor="#2563eb" />
+          </div>
+        ) : null}
 
         {/* Tags */}
         {article.tags && article.tags.length > 0 && (
@@ -164,11 +173,11 @@ export default function NewsDetailPage() {
                     className="group block"
                   >
                     <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-muted">
-                      {related.imageUrl ? (
+                      {related.coverImage?.imageUrl || related.imageUrl ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={related.imageUrl}
-                          alt={related.title}
+                          src={related.coverImage?.imageUrl || related.imageUrl}
+                          alt={related.coverImage?.alt || related.title}
                           className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
@@ -193,8 +202,6 @@ export default function NewsDetailPage() {
           </div>
         )}
       </article>
-
-      <ContactCTASection />
     </div>
   );
 }

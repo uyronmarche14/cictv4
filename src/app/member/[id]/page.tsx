@@ -2,10 +2,9 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { CldImage } from 'next-cloudinary';
-import { ArrowLeft, Mail, Calendar, Award, Users, Target, Sparkles, CheckCircle2, Briefcase, Code, TrendingUp } from 'lucide-react';
+import { Mail, Calendar, Award, Users, Target, Sparkles, CheckCircle2, Briefcase, Code, TrendingUp, Loader2 } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
-import { organizations } from '@/components/organizations/organizationData';
-import { Badge } from '@/components/ui/badge';
+import { useOrganizations } from '@/hooks/useOrganizations'; // Use dynamic hook
 import { Button } from '@/components/ui/button';
 import Timeline from '@/components/Timeline';
 import ScrollingGallery from '@/components/ScrollingGallery';
@@ -17,23 +16,37 @@ export default function MemberProfilePage() {
   const router = useRouter();
   const memberId = params.id as string;
 
+  // Fetch all organizations to find the member
+  const { organizations, loading } = useOrganizations();
+
   // Find the member across all organizations
   let member = null;
   let organization = null;
 
-  for (const org of organizations) {
-    const foundMember = org.members.find(m => m.id === memberId);
-    if (foundMember) {
-      member = foundMember;
-      organization = org;
-      break;
+  if (!loading && organizations.length > 0) {
+    for (const org of organizations) {
+      if (!org.members) continue;
+      const foundMember = org.members.find(m => m.id === memberId);
+      if (foundMember) {
+        member = foundMember;
+        organization = org;
+        break;
+      }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (!member || !organization) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold mb-2">Member Not Found</h1>
           <Button onClick={() => router.back()} variant="outline">
             Go Back

@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { CldImage } from 'next-cloudinary';
-import { Target, Eye, ChevronRight, Sparkles } from 'lucide-react';
+import { Target, Eye, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { organizations } from './organizationData';
+import { useOrganization } from '@/hooks/useOrganizations';
+import OrganizationContentPreview from '@/components/organizations/OrganizationContentPreview';
 
 interface OrganizationShowcaseProps {
   organizationId: string;
@@ -13,7 +14,15 @@ interface OrganizationShowcaseProps {
 
 export default function OrganizationShowcase({ organizationId }: OrganizationShowcaseProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const organization = organizations.find(org => org.id === organizationId);
+  const { organization, loading } = useOrganization(organizationId);
+
+  if (loading) {
+     return (
+        <div className="flex items-center justify-center min-h-[300px]">
+           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+     );
+  }
 
   if (!organization) {
     return (
@@ -136,6 +145,14 @@ export default function OrganizationShowcase({ organizationId }: OrganizationSho
             {vision}
           </p>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <OrganizationContentPreview
+          organizationId={organization.id}
+          organizationName={organization.name}
+          compact
+        />
       </div>
 
       {/* CTA Button */}

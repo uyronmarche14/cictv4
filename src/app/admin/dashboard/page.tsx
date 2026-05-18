@@ -1,48 +1,80 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
-import api from '@/lib/api/axios';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { adminAPI } from '@/lib/api/admin';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Newspaper, Megaphone, UserCog } from "lucide-react";
+import { Users, Newspaper, Megaphone, UserCog, Building2, CalendarDays } from "lucide-react";
 import { useEffect, useState } from 'react';
+import { AdminModuleKey, DashboardSummary } from '@/types';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    users: 0,
-    news: 0,
-    announcements: 0,
-    roles: 0,
-  });
+  const { getVisibleAdminModules } = usePermissions();
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchSummary = async () => {
       try {
-        // Parallel requests for better performance
-        const [usersRes, newsRes, announcementsRes, rolesRes] = await Promise.all([
-          api.get('/users?limit=1'),
-          api.get('/news?limit=1'),
-          // Assuming there is an endpoint for announcements similar to news
-          api.get('/announcements?limit=1').catch(() => ({ data: { data: { pagination: { total: 0 } } } })), 
-          api.get('/roles'),
-        ]);
-
-        setStats({
-          users: usersRes.data.data.pagination.total,
-          news: newsRes.data.data.pagination.total,
-          announcements: announcementsRes.data?.data?.pagination?.total || 0,
-          roles: rolesRes.data.data.roles.length, // Roles endpoint returns array, not pagination
-        });
+        const response = await adminAPI.getDashboardSummary();
+        setSummary(response);
       } catch (error) {
-        console.error('Failed to fetch dashboard stats:', error);
+        console.error('Failed to fetch dashboard summary:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStats();
+    fetchSummary();
   }, []);
+
+  const visibleModules = summary?.visibleModules ?? getVisibleAdminModules();
+
+  const cards = [
+    {
+      key: 'users',
+      title: 'Total Users',
+      description: 'Registered users',
+      icon: Users,
+      value: summary?.cards.users ?? 0,
+    },
+    {
+      key: 'news',
+      title: 'News Articles',
+      description: 'News records',
+      icon: Newspaper,
+      value: summary?.cards.news ?? 0,
+    },
+    {
+      key: 'announcements',
+      title: 'Announcements',
+      description: 'Announcement records',
+      icon: Megaphone,
+      value: summary?.cards.announcements ?? 0,
+    },
+    {
+      key: 'roles',
+      title: 'Roles',
+      description: 'Defined roles',
+      icon: UserCog,
+      value: summary?.cards.roles ?? 0,
+    },
+    {
+      key: 'organizations',
+      title: 'Organizations',
+      description: 'Managed organizations',
+      icon: Building2,
+      value: summary?.cards.organizations ?? 0,
+    },
+    {
+      key: 'events',
+      title: 'Events',
+      description: 'Event records',
+      icon: CalendarDays,
+      value: summary?.cards.events ?? 0,
+    },
+  ].filter((card) => visibleModules.includes(card.key as AdminModuleKey));
 
   return (
     <div className="space-y-6">
@@ -53,55 +85,22 @@ export default function AdminDashboard() {
         </p>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.users}</div>
-            <p className="text-xs text-muted-foreground">
-              Registered users
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">News Articles</CardTitle>
-            <Newspaper className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.news}</div>
-            <p className="text-xs text-muted-foreground">
-              Published news
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Announcements</CardTitle>
-            <Megaphone className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.announcements}</div>
-            <p className="text-xs text-muted-foreground">
-              Active announcements
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Roles</CardTitle>
-            <UserCog className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? '...' : stats.roles}</div>
-            <p className="text-xs text-muted-foreground">
-              Defined roles
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.key}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{loading ? '...' : card.value}</div>
+                <p className="text-xs text-muted-foreground">{card.description}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

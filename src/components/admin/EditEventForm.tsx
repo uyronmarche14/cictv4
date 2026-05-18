@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -19,31 +19,39 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { eventAPI, Event } from '@/lib/api/event';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { GalleryManager } from '@/components/admin/GalleryManager';
+import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
+import { EventScheduleEditor } from '@/components/admin/EventScheduleEditor';
+import {
+  ContentOwnerType,
+  ContentSection,
+  EventScheduleItem,
+  MediaAsset,
+  Organization,
+  Permission,
+} from '@/types';
+import { uploadsAPI } from '@/lib/api/uploads';
+import { organizationService } from '@/services/organizationService';
+import { useAuth } from '@/context/AuthContext';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { sanitizeCoverAndGallery } from '@/lib/media';
 
 const formSchema = z.object({
   title: z.string().min(2, 'Title must be at least 2 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  bodyHtml: z.string().min(10, 'Description must be at least 10 characters'),
   excerpt: z.string().min(10, 'Excerpt must be at least 10 characters').max(200, 'Excerpt too long'),
   startDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
   endDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
   location: z.string().min(2, 'Location is required'),
-  maxAttendees: z.string().transform((val) => val === '' ? undefined : parseInt(val, 10)).optional(),
-  status: z.enum(['draft', 'published', 'cancelled', 'completed']),
-  image: z.any().optional(),
+  maxAttendees: z.string().transform((val) => (val === '' ? undefined : parseInt(val, 10))).optional(),
+  tags: z.string().optional(),
 });
 
 interface EditEventFormProps {
@@ -52,97 +60,185 @@ interface EditEventFormProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
+type InputFieldProps = React.ComponentProps<typeof Input>;
+type RichTextFieldProps = { value: string; onChange: (value: string) => void };
+type NumericFieldProps = Omit<React.ComponentProps<typeof Input>, 'onChange'> & {
+  onChange: (value: string) => void;
+};
 
 export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEventFormProps) {
+  const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const [isLoading, setIsLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(event.imageUrl || null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const canManageSystemOwnedContent = hasPermission(Permission.EDIT_EVENT);
+  const scopedManageOrganizationIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (user?.organizationAssignments ?? [])
+            .filter((assignment) => assignment.permissions.includes(Permission.EDIT_EVENT))
+            .map((assignment) => assignment.organizationId)
+        )
+      ),
+    [user?.organizationAssignments]
+  );
+  const [ownerType, setOwnerType] = useState<ContentOwnerType>(event.ownerType);
+  const [organizationId, setOrganizationId] = useState(event.organizationId ?? '');
+  const [coverImage, setCoverImage] = useState<MediaAsset | undefined>(
+    event.coverImage ?? (event.imageUrl ? { imageUrl: event.imageUrl, alt: event.title } : undefined)
+  );
+  const [gallery, setGallery] = useState<MediaAsset[]>(event.gallery ?? []);
+  const [sections, setSections] = useState<ContentSection[]>(event.sections ?? []);
+  const [schedule, setSchedule] = useState<EventScheduleItem[]>(event.schedule ?? []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: event.title,
-      description: event.description,
+      bodyHtml: event.bodyHtml || event.description || '',
       excerpt: event.excerpt,
       startDate: new Date(event.startDate).toISOString().slice(0, 16),
       endDate: new Date(event.endDate).toISOString().slice(0, 16),
       location: event.location,
       maxAttendees: event.maxAttendees || undefined,
-      status: event.status,
+      tags: event.tags.join(', '),
     },
   });
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
 
-  // Reset form when event changes
+    const fetchOrganizations = async () => {
+      try {
+        const data = await organizationService.getAll();
+        setOrganizations(data);
+      } catch (error) {
+        console.error('Failed to fetch organizations for event ownership:', error);
+      }
+    };
+
+    fetchOrganizations();
+  }, [open]);
+
+  const availableOrganizations = useMemo(() => {
+    if (canManageSystemOwnedContent) {
+      return organizations;
+    }
+
+    const allowedIds = new Set(scopedManageOrganizationIds);
+
+    return organizations.filter((organization) => allowedIds.has(organization.id));
+  }, [canManageSystemOwnedContent, organizations, scopedManageOrganizationIds]);
+
+  const selectedOrganizationName =
+    organizations.find((organization) => organization.id === organizationId)?.name ?? 'selected organization';
+
   useEffect(() => {
     form.reset({
       title: event.title,
-      description: event.description,
+      bodyHtml: event.bodyHtml || event.description || '',
       excerpt: event.excerpt,
       startDate: new Date(event.startDate).toISOString().slice(0, 16),
       endDate: new Date(event.endDate).toISOString().slice(0, 16),
       location: event.location,
       maxAttendees: event.maxAttendees || undefined,
-      status: event.status,
+      tags: event.tags.join(', '),
     });
-    setImagePreview(event.imageUrl || null);
+    setCoverImage(event.coverImage ?? (event.imageUrl ? { imageUrl: event.imageUrl, alt: event.title } : undefined));
+    setGallery(event.gallery ?? []);
+    setSections(event.sections ?? []);
+    setSchedule(event.schedule ?? []);
+    setOwnerType(event.ownerType);
+    setOrganizationId(event.organizationId ?? '');
   }, [event, form]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue('image', file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  useEffect(() => {
+    if (ownerType === ContentOwnerType.SYSTEM) {
+      setOrganizationId('');
+      return;
+    }
+
+    if (!organizationId && availableOrganizations.length > 0) {
+      setOrganizationId(availableOrganizations[0].id);
+    }
+  }, [ownerType, organizationId, availableOrganizations]);
+
+  useEffect(() => {
+    if (!coverImage || gallery.length === 0) {
+      return;
+    }
+
+    const { gallery: sanitizedGallery, removedDuplicates } = sanitizeCoverAndGallery(
+      coverImage,
+      gallery
+    );
+
+    if (removedDuplicates > 0) {
+      setGallery(sanitizedGallery);
+      toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.');
+    }
+  }, [coverImage, gallery]);
+
+  const handleCoverImageChange = async (inputEvent: React.ChangeEvent<HTMLInputElement>) => {
+    const file = inputEvent.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const [uploadedImage] = await uploadsAPI.uploadImages([file]);
+      setCoverImage(uploadedImage);
+    } catch (error) {
+      console.error('Failed to upload cover image:', error);
+    } finally {
+      setUploadingCover(false);
     }
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('title', values.title);
-      formData.append('description', values.description);
-      formData.append('excerpt', values.excerpt);
-      formData.append('startDate', values.startDate);
-      formData.append('endDate', values.endDate);
-      formData.append('location', values.location);
-      formData.append('status', values.status);
-      
-      if (typeof values.maxAttendees === 'number' && !isNaN(values.maxAttendees)) {
-         formData.append('maxAttendees', values.maxAttendees.toString());
-      }
-      
-      if (values.image) {
-        formData.append('image', values.image);
+      if (ownerType === ContentOwnerType.ORGANIZATION && !organizationId) {
+        toast.error('Select the organization that should own this event.');
+        setIsLoading(false);
+        return;
       }
 
-      await eventAPI.update(event._id, formData);
+      const { gallery: sanitizedGallery, removedDuplicates } = sanitizeCoverAndGallery(
+        coverImage,
+        gallery
+      );
+      if (removedDuplicates > 0) {
+        setGallery(sanitizedGallery);
+        toast.info('Duplicate gallery images matching the cover image were removed automatically.');
+      }
+
+      await eventAPI.update(event._id, {
+        title: values.title,
+        bodyHtml: values.bodyHtml,
+        description: values.bodyHtml,
+        excerpt: values.excerpt,
+        ownerType,
+        organizationId: ownerType === ContentOwnerType.ORGANIZATION ? organizationId : null,
+        startDate: values.startDate,
+        endDate: values.endDate,
+        location: values.location,
+        maxAttendees: typeof values.maxAttendees === 'number' ? values.maxAttendees : undefined,
+        tags: values.tags ? values.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : [],
+        coverImage,
+        imageUrl: coverImage?.imageUrl,
+        imageId: coverImage?.imageId,
+        gallery: sanitizedGallery,
+        sections,
+        schedule,
+      });
       toast.success('Event updated successfully');
       onOpenChange(false);
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to update event:', error);
-      
-      let handled = false;
-      if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
-          error.response.data.errors.forEach((err: { field?: string; message: string }) => {
-              if (err.field) {
-                  const fieldName = err.field as keyof z.infer<typeof formSchema>;
-                  if (['title', 'description', 'excerpt', 'startDate', 'endDate', 'location', 'maxAttendees', 'image', 'status'].includes(fieldName)) {
-                       form.setError(fieldName, { message: err.message });
-                  } else {
-                       toast.error(err.message);
-                  }
-              }
-          });
-          handled = true;
-      }
-      
-      if (!handled) {
-          toast.error(error.response?.data?.message || 'Failed to update event');
-      }
+      toast.error('Failed to update event');
     } finally {
       setIsLoading(false);
     }
@@ -150,186 +246,216 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Event</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <FormField
               control={form.control}
               name="title"
-              render={({ field }) => (
+              render={({ field }: { field: InputFieldProps }) => (
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Tech Summit 2024" {...field} />
+                    <Input placeholder="Tech Summit 2026" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <FormLabel>Content Ownership</FormLabel>
+                <Select
+                  value={ownerType}
+                  onValueChange={(value) => setOwnerType(value as ContentOwnerType)}
+                  disabled={!canManageSystemOwnedContent}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select ownership" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {canManageSystemOwnedContent ? (
+                      <SelectItem value={ContentOwnerType.SYSTEM}>System-owned</SelectItem>
+                    ) : null}
+                    <SelectItem value={ContentOwnerType.ORGANIZATION}>Organization-owned</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Organization pages only surface published organization-owned events. Use system-owned only for college-wide events.
+                </p>
+              </div>
+              {ownerType === ContentOwnerType.ORGANIZATION ? (
+                <div className="space-y-2">
+                  <FormLabel>Publish To Organization</FormLabel>
+                  <Select value={organizationId} onValueChange={setOrganizationId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableOrganizations.map((organization) => (
+                        <SelectItem key={organization.id} value={organization.id}>
+                          {organization.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm">
+              <p className="font-medium text-foreground">
+                {ownerType === ContentOwnerType.SYSTEM
+                  ? 'This event will appear as a system-wide CICT event once published.'
+                  : `This event will appear under ${selectedOrganizationName} once published.`}
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Pick organization-owned content for events that should show up on student organization tabs and organization homepages.
+              </p>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
                 name="startDate"
-                render={({ field }) => (
-                    <FormItem>
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem>
                     <FormLabel>Start Date/Time</FormLabel>
                     <FormControl>
-                        <Input type="datetime-local" {...field} />
+                      <Input type="datetime-local" {...field} />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="endDate"
-                render={({ field }) => (
-                    <FormItem>
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem>
                     <FormLabel>End Date/Time</FormLabel>
                     <FormControl>
-                        <Input type="datetime-local" {...field} />
+                      <Input type="datetime-local" {...field} />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
+              />
             </div>
-
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Main Auditorium" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="grid grid-cols-2 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
-                name="status"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="published">Published</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                    </Select>
+                name="location"
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Main Auditorium" {...field} />
+                    </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
-
-                <FormField
+              />
+              <FormField
                 control={form.control}
                 name="maxAttendees"
-                render={({ field }) => (
-                    <FormItem>
+                render={({ field }: { field: NumericFieldProps }) => (
+                  <FormItem>
                     <FormLabel>Max Attendees</FormLabel>
                     <FormControl>
-                        <Input 
-                            type="number" 
-                            placeholder="0 for unlimited"
-                            {...field} 
-                            value={field.value ?? ''}
-                            onChange={(e) => field.onChange(e.target.value)}
-                        />
+                      <Input
+                        type="number"
+                        placeholder="0 for unlimited"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={(changeEvent) => field.onChange(changeEvent.target.value)}
+                      />
                     </FormControl>
                     <FormMessage />
-                    </FormItem>
+                  </FormItem>
                 )}
-                />
+              />
             </div>
-
             <FormField
               control={form.control}
               name="excerpt"
-              render={({ field }) => (
+              render={({ field }: { field: InputFieldProps }) => (
                 <FormItem>
                   <FormLabel>Excerpt</FormLabel>
                   <FormControl>
                     <Input placeholder="Brief summary..." {...field} />
                   </FormControl>
-                  <FormDescription>Shown in card previews (max 200 chars)</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="description"
-              render={({ field }) => (
+              name="bodyHtml"
+              render={({ field }: { field: RichTextFieldProps }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Event Body</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Full details..." className="h-32" {...field} />
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Write the event details..."
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
-              name="image"
-              render={({ field: { onChange, ...field } }) => (
+              name="tags"
+              render={({ field }: { field: InputFieldProps }) => (
                 <FormItem>
-                  <FormLabel>Featured Image (Optional)</FormLabel>
+                  <FormLabel>Tags</FormLabel>
                   <FormControl>
-                    <div className="flex flex-col gap-4">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          handleImageChange(e);
-                          onChange(e.target.files?.[0]);
-                        }}
-                        {...field}
-                        value={undefined}
-                      />
-                      {imagePreview && (
-                        <div className="relative w-full h-48 rounded-md overflow-hidden border">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={imagePreview}
-                            alt="Preview"
-                            className="object-cover w-full h-full"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <Input placeholder="career, workshop, seminar" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            <ContentSectionsEditor sections={sections} onChange={setSections} />
+            <EventScheduleEditor schedule={schedule} onChange={setSchedule} />
+            <div className="space-y-3">
+              <FormLabel>Cover Image</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                The cover image is the hero image used on cards and detail pages. Do not reuse it as a gallery image.
+              </p>
+              <Input type="file" accept="image/*" onChange={handleCoverImageChange} />
+              {uploadingCover ? <p className="text-sm text-muted-foreground">Uploading cover image...</p> : null}
+              {coverImage ? (
+                <div className="overflow-hidden rounded-md border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverImage.imageUrl} alt={coverImage.alt} className="h-56 w-full object-cover" />
+                </div>
+              ) : null}
+            </div>
+            <GalleryManager
+              label="Supporting Gallery"
+              coverImage={coverImage}
+              gallery={gallery}
+              onChange={setGallery}
+              onDuplicateRemoval={() =>
+                toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.')
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Gallery images appear below the event details as supporting media only. The system removes any gallery image that duplicates the cover image.
+            </p>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Update Event
               </Button>
             </DialogFooter>

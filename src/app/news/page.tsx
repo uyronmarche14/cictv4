@@ -8,7 +8,7 @@ import { useNews } from '@/hooks/use-news';
 import { NewsStatus } from '@/types';
 import { format } from 'date-fns';
 import { useState } from 'react';
-import ContactCTASection from '@/components/CTASection';
+import { getOwnershipLabel } from '@/lib/content-ownership';
 
 export default function NewsPage() {
   const [page, setPage] = useState(1);
@@ -16,7 +16,7 @@ export default function NewsPage() {
 
   return (
     <div className="min-h-screen bg-background py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
@@ -60,11 +60,11 @@ export default function NewsPage() {
                     <article className="h-full flex flex-col rounded-2xl border border-border/50 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
                       {/* Image */}
                       <div className="relative aspect-video overflow-hidden bg-muted">
-                        {article.imageUrl ? (
+                        {article.coverImage?.imageUrl || article.imageUrl ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
-                            src={article.imageUrl}
-                            alt={article.title}
+                            src={article.coverImage?.imageUrl || article.imageUrl}
+                            alt={article.coverImage?.alt || article.title}
                             className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
                           />
                         ) : (
@@ -75,6 +75,11 @@ export default function NewsPage() {
                         <div className="absolute top-4 left-4">
                           <Badge className="bg-background/90 backdrop-blur-sm">
                             {article.status}
+                          </Badge>
+                        </div>
+                        <div className="absolute top-4 right-4">
+                          <Badge variant="outline" className="bg-background/90 backdrop-blur-sm">
+                            {getOwnershipLabel(article)}
                           </Badge>
                         </div>
                       </div>
@@ -116,6 +121,13 @@ export default function NewsPage() {
                             ))}
                           </div>
                         )}
+
+                        {article.gallery?.length ? (
+                          <p className="text-xs text-muted-foreground mb-4">
+                            {article.gallery.length} supporting image
+                            {article.gallery.length > 1 ? 's' : ''}
+                          </p>
+                        ) : null}
 
                         {/* Read More */}
                         <div className="flex items-center gap-2 text-primary font-medium text-sm group-hover:gap-3 transition-all">
@@ -161,7 +173,6 @@ export default function NewsPage() {
           </>
         )}
       </div>
-      <ContactCTASection />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import type { AuthProfile } from '@/types';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -37,11 +38,11 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      const response = await api.post('/auth/login', data);
+      const response = await api.post<{ success: boolean; data: AuthProfile }>('/auth/login', data);
       
       if (response.data.success) {
-        // Check structure of response data
-        const { token, user } = response.data.data || response.data;
+        const authProfile = response.data.data;
+        const { user, canAccessAdmin } = authProfile;
         
         if (!user) {
           console.error('Login response missing user data:', response.data);
@@ -51,15 +52,13 @@ export default function AdminLoginPage() {
         }
         
         // Handle role checking safely
-        const userRole = user.role || '';
-        
-        if (userRole !== 'full_admin' && userRole !== 'semi_admin' && userRole !== 'admin' && userRole !== 'superadmin') {
+        if (!canAccessAdmin) {
           setError('Access denied. Admin privileges required.');
           setLoading(false);
           return;
         }
         
-        login(token, user);
+        login(authProfile);
       }
     } catch (err: unknown) {
       let errorMessage = 'Invalid email or password';

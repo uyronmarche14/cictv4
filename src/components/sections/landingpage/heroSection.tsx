@@ -57,7 +57,7 @@ const HeroSection = () => {
   const StaticContent = () => (
     <section className="relative min-h-screen flex items-center justify-center">
       <MeshGradientBg variant="default" interactive={false} />
-      <div className="relative z-10 w-full max-w-[90vw] sm:max-w-[85vw] md:max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 lg:py-20">
+      <div className="relative z-10 w-full mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 lg:py-20">
         <div className="flex flex-col items-center justify-center">
           <div className="w-full flex flex-col items-center justify-center text-center">
             <h1 className="font-black text-foreground text-center w-full text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-2 md:mb-4 select-none" style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.1), -1px -1px 0 rgba(255,255,255,0.1)' }}>
@@ -96,7 +96,7 @@ const HeroSection = () => {
     <section className="relative min-h-screen flex items-center justify-center">
       <MeshGradientBg variant="default" interactive={true} />
       <motion.div
-        className="relative z-10 w-full max-w-[100vw] sm:max-w-[85vw] md:max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 lg:py-20"
+        className="relative z-10 w-full mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16 lg:py-20"
         variants={animations.container}
         initial="hidden"
         whileInView="visible"

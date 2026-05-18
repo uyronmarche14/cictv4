@@ -90,6 +90,7 @@ export function DataTablePagination<TData>({
                 <PaginationItem key={page}>
                   <PaginationLink
                     href="#"
+                    size="icon"
                     isActive={currentPage === page}
                     onClick={() => table.setPageIndex((page as number) - 1)}
                   >

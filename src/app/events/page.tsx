@@ -10,13 +10,14 @@ export default function EventsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['events', 'published'],
     queryFn: () => eventAPI.getAll({ status: 'published' }),
+    staleTime: 0,
   });
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
       <MeshGradientBg variant="subtle" className="fixed inset-0" interactive={false} />
       
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-black font-heading tracking-tight mb-4">
             Upcoming Events

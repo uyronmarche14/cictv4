@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api/axios';
-import { Announcement, AnnouncementPriority } from '@/types';
+import { Announcement, AnnouncementPriority, ContentOwnerType } from '@/types';
 import { AnnouncementForm } from '@/components/admin/AnnouncementForm';
 import {
   Table,
@@ -24,20 +24,59 @@ import { MoreHorizontal, Plus, Search, Trash, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { NewsStatus, Permission } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { getOwnershipLabel } from '@/lib/content-ownership';
+import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 
 export default function AnnouncementsPage() {
+  const {
+    hasPermission,
+    hasScopedPermission,
+    hasAnyScopedPermission,
+    canAccessAnnouncementsModule,
+    getScopedOrganizationIdsForPermissions,
+  } = usePermissions();
+  const { organizations } = useOrganizations();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
+    hasPermission(Permission.VIEW_ANNOUNCEMENT) ? 'all' : ContentOwnerType.ORGANIZATION
+  );
+  const [organizationFilter, setOrganizationFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const { shouldRender } = useAdminPageAccess(canAccessAnnouncementsModule());
+  const canViewAllAnnouncements = hasPermission(Permission.VIEW_ANNOUNCEMENT);
+  const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
+    Permission.VIEW_ANNOUNCEMENT,
+    Permission.CREATE_ANNOUNCEMENT,
+    Permission.EDIT_ANNOUNCEMENT,
+    Permission.DELETE_ANNOUNCEMENT,
+    Permission.PUBLISH_ANNOUNCEMENT,
+    Permission.ARCHIVE_ANNOUNCEMENT,
+  ]);
+  const availableOrganizations = canViewAllAnnouncements
+    ? organizations
+    : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/announcements?page=${page}&limit=10&search=${search}`);
+      const response = await api.get('/announcements', {
+        params: {
+          page,
+          limit: 10,
+          search,
+          ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
+          organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
+        },
+      });
       if (response.data.success) {
         setAnnouncements(response.data.data.announcements);
         setTotalPages(response.data.data.pagination.pages);
@@ -47,11 +86,44 @@ export default function AnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, ownerTypeFilter, organizationFilter]);
+
+  const canActOnAnnouncement = (item: Announcement, permission: Permission) =>
+    hasPermission(permission) ||
+    (item.ownerType === ContentOwnerType.ORGANIZATION &&
+      !!item.organizationId &&
+      hasScopedPermission(item.organizationId, permission));
 
   useEffect(() => {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
+
+  useEffect(() => {
+    if (canViewAllAnnouncements) {
+      return;
+    }
+
+    if (ownerTypeFilter !== ContentOwnerType.ORGANIZATION) {
+      setOwnerTypeFilter(ContentOwnerType.ORGANIZATION);
+    }
+  }, [canViewAllAnnouncements, ownerTypeFilter]);
+
+  useEffect(() => {
+    if (canViewAllAnnouncements) {
+      return;
+    }
+
+    if (
+      organizationFilter !== 'all' &&
+      !availableOrganizations.some((organization) => organization.id === organizationFilter)
+    ) {
+      setOrganizationFilter('all');
+    }
+  }, [availableOrganizations, canViewAllAnnouncements, organizationFilter]);
+
+  if (!shouldRender) {
+    return null;
+  }
 
   const handleCreate = () => {
     setSelectedAnnouncement(null);
@@ -71,6 +143,15 @@ export default function AnnouncementsPage() {
       fetchAnnouncements();
     } catch (error) {
       console.error('Failed to delete announcement:', error);
+    }
+  };
+
+  const handleWorkflowAction = async (id: string, action: 'publish' | 'archive') => {
+    try {
+      await api.patch(`/announcements/${id}/${action}`);
+      fetchAnnouncements();
+    } catch (error) {
+      console.error(`Failed to ${action} announcement:`, error);
     }
   };
 
@@ -98,9 +179,12 @@ export default function AnnouncementsPage() {
             Manage system announcements
           </p>
         </div>
-        <Button onClick={handleCreate}>
+        {hasPermission(Permission.CREATE_ANNOUNCEMENT) ||
+        hasAnyScopedPermission(Permission.CREATE_ANNOUNCEMENT) ? (
+          <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" /> Create Announcement
-        </Button>
+          </Button>
+        ) : null}
       </div>
 
       <Card>
@@ -117,6 +201,39 @@ export default function AnnouncementsPage() {
                   className="pl-8 w-[250px]"
                 />
               </div>
+              <Select
+                value={ownerTypeFilter}
+                onValueChange={(value: 'all' | ContentOwnerType) => setOwnerTypeFilter(value)}
+                disabled={!canViewAllAnnouncements}
+              >
+                <SelectTrigger className="w-[170px]">
+                  <SelectValue placeholder="Ownership" />
+                </SelectTrigger>
+                <SelectContent>
+                  {canViewAllAnnouncements ? (
+                    <SelectItem value="all">All ownership</SelectItem>
+                  ) : null}
+                  {canViewAllAnnouncements ? (
+                    <SelectItem value={ContentOwnerType.SYSTEM}>System-owned</SelectItem>
+                  ) : null}
+                  <SelectItem value={ContentOwnerType.ORGANIZATION}>Organization-owned</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={organizationFilter} onValueChange={setOrganizationFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {canViewAllAnnouncements ? 'All organizations' : 'Assigned organizations'}
+                  </SelectItem>
+                  {availableOrganizations.map((organization) => (
+                    <SelectItem key={organization.id} value={organization.id}>
+                      {organization.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -127,6 +244,7 @@ export default function AnnouncementsPage() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Priority</TableHead>
+                  <TableHead>Ownership</TableHead>
                   <TableHead>Target Audience</TableHead>
                   <TableHead>Expires At</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -135,13 +253,13 @@ export default function AnnouncementsPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : announcements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       No announcements found.
                     </TableCell>
                   </TableRow>
@@ -150,6 +268,11 @@ export default function AnnouncementsPage() {
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getPriorityBadge(item.priority)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {getOwnershipLabel(item)}
+                        </Badge>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {item.targetAudience.map((audience, index) => (
@@ -173,10 +296,27 @@ export default function AnnouncementsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(item)}>
+                            <DropdownMenuItem
+                              disabled={!canActOnAnnouncement(item, Permission.EDIT_ANNOUNCEMENT)}
+                              onClick={() => handleEdit(item)}
+                            >
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item._id)}>
+                            {item.status === NewsStatus.DRAFT && canActOnAnnouncement(item, Permission.PUBLISH_ANNOUNCEMENT) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'publish')}>
+                                Publish
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.PUBLISHED && canActOnAnnouncement(item, Permission.ARCHIVE_ANNOUNCEMENT) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'archive')}>
+                                Archive
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              disabled={!canActOnAnnouncement(item, Permission.DELETE_ANNOUNCEMENT)}
+                              className="text-red-600"
+                              onClick={() => handleDelete(item._id)}
+                            >
                               <Trash className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>

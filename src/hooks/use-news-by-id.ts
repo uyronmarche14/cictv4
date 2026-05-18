@@ -17,5 +17,6 @@ export const useNewsById = (id: string) => {
       return data.data.news;
     },
     enabled: !!id,
+    staleTime: 0,
   });
 };

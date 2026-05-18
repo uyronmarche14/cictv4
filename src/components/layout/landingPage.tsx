@@ -27,9 +27,7 @@ const TestimonialSeciton = lazy(
   () => import("@/components/sections/landingpage/Testimonial")
 );
 
-const CTASection = lazy(
-  () => import("@/components/CTASection")
-);
+
 
 interface OptimizedLayoutProps {
   children?: React.ReactNode;
@@ -50,7 +48,6 @@ const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
         <NewsSection />
         <FAQsSection />
         <TestimonialSeciton />
-        <CTASection />
         
         <div className="relative z-10">{children}</div>
       </div>

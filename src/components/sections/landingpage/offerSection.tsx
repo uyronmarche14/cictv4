@@ -63,7 +63,7 @@ export default function OfferSection() {
         after:absolute after:inset-0 after:border-t-2 after:border-t-primary/10 after:rounded-t-3xl 
         animate-border-t-pulse 
         transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
               Bachelor of Science in Computer Science
@@ -105,7 +105,7 @@ export default function OfferSection() {
         after:absolute after:inset-0 after:border-b-2 after:border-b-accent/10 after:rounded-b-3xl 
         animate-border-b-pulse 
         transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-4">
               Bachelor of Science in Information Systems

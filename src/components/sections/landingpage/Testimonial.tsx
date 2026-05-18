@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
+import PublicSectionHeader from '@/components/sections/landingpage/PublicSectionHeader'
 
 type Testimonial = {
     name: string
@@ -97,12 +98,13 @@ export default function WallOfLoveSection() {
     return (
         <section>
             <div className="py-16 md:py-32">
-                <div className="mx-auto max-w-7xl">
-                    <div className="text-center">
-                        <h2 className="text-balance text-4xl font-bold lg:text-6xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-                            Loved by the Community
-                        </h2>
-                        <p className="mt-6">Harum quae dolore orrupti aut temporibus ariatur.</p>
+                <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+                    <div className="mb-12">
+                        <PublicSectionHeader
+                            eyebrow="Testimonials"
+                            title="Loved by the Community"
+                            description="Stories from students, alumni, and collaborators who have experienced CICT's learning community firsthand."
+                        />
                     </div>
                     <div className="mt-8 grid gap-3 sm:grid-cols-2 md:mt-12 lg:grid-cols-3">
                         {testimonialChunks.map((chunk, chunkIndex) => (
