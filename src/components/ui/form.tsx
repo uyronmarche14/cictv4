@@ -26,7 +26,7 @@ type FormFieldProps = {
 function FormField<T extends FormFieldProps>({ ...props }: T) {
   return (
     <FormFieldContext.Provider value={{ name: String(props.name) }}>
-      <Controller {...(props as React.ComponentProps<typeof Controller>)} />
+      <Controller {...(props as unknown as React.ComponentProps<typeof Controller>)} />
     </FormFieldContext.Provider>
   )
 }
