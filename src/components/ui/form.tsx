@@ -3,12 +3,7 @@
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
-import {
-  Controller,
-  FormProvider,
-  useFormContext,
-  useFormState,
-} from "react-hook-form"
+import { Controller, FormProvider, useFormContext, useFormState } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
@@ -23,10 +18,15 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 )
 
-function FormField({ ...props }: React.ComponentProps<typeof Controller>) {
+type FormFieldProps = {
+  name: string
+  render: (...args: never[]) => React.ReactElement
+}
+
+function FormField<T extends FormFieldProps>({ ...props }: T) {
   return (
     <FormFieldContext.Provider value={{ name: String(props.name) }}>
-      <Controller {...props} />
+      <Controller {...(props as React.ComponentProps<typeof Controller>)} />
     </FormFieldContext.Provider>
   )
 }
