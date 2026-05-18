@@ -2,38 +2,51 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { CldImage } from 'next-cloudinary';
-import { ArrowLeft, Mail, Calendar, Award, Users, Target, Sparkles, CheckCircle2, Briefcase, Code, TrendingUp } from 'lucide-react';
+import { Mail, Calendar, Award, Users, Target, Sparkles, CheckCircle2, Briefcase, Code, TrendingUp, Loader2 } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
-import { organizations } from '@/app/components/StoryTabs/organizationData';
-import { Badge } from '@/app/components/ui/badge';
-import { Button } from '@/app/components/ui/button';
-import Timeline from '@/app/components/Timeline';
-import ScrollingGallery from '@/app/components/ScrollingGallery';
-import DetailPageCTA from '@/app/components/sections/DetailPageCTA';
-import DetailPageFooter from '@/app/components/sections/DetailPageFooter';
+import { useOrganizations } from '@/hooks/useOrganizations'; // Use dynamic hook
+import { Button } from '@/components/ui/button';
+import Timeline from '@/components/Timeline';
+import ScrollingGallery from '@/components/ScrollingGallery';
+import DetailPageCTA from '@/components/sections/DetailPageCTA';
+import DetailPageFooter from '@/components/sections/DetailPageFooter';
 
 export default function MemberProfilePage() {
   const params = useParams();
   const router = useRouter();
   const memberId = params.id as string;
 
+  // Fetch all organizations to find the member
+  const { organizations, loading } = useOrganizations();
+
   // Find the member across all organizations
   let member = null;
   let organization = null;
 
-  for (const org of organizations) {
-    const foundMember = org.members.find(m => m.id === memberId);
-    if (foundMember) {
-      member = foundMember;
-      organization = org;
-      break;
+  if (!loading && organizations.length > 0) {
+    for (const org of organizations) {
+      if (!org.members) continue;
+      const foundMember = org.members.find(m => m.id === memberId);
+      if (foundMember) {
+        member = foundMember;
+        organization = org;
+        break;
+      }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (!member || !organization) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
+         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold mb-2">Member Not Found</h1>
           <Button onClick={() => router.back()} variant="outline">
             Go Back
@@ -68,105 +81,18 @@ export default function MemberProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Minimal Header */}
-      <div className="border-b border-border/50 sticky top-0 z-10 bg-background/80 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="gap-2 hover:bg-transparent"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden sm:inline">Back</span>
-          </Button>
-
-          <Badge
-            variant="outline"
-            className="text-xs font-medium border-0"
-            style={{
-              backgroundColor: `${organization.color.primary}15`,
-              color: organization.color.primary
-            }}
-          >
-            {organization.name}
-          </Badge>
-        </div>
-      </div>
+      
 
       {/* Main Content - Clean & Minimal */}
-      <article className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <article className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 mt-20">
 
         {/* Hero Section - Minimal Design */}
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-12 mb-20">
           {/* Profile Image - Clean */}
           <div className="relative">
             {/* Floating Animated Badges */}
-            <div className="absolute -top-4 -right-4 animate-pulse z-10">
-              <Badge
-                variant="outline"
-                className="shadow-lg backdrop-blur-sm border-2"
-                style={{
-                  backgroundColor: `${organization.color.primary}15`,
-                  borderColor: organization.color.primary,
-                  color: organization.color.primary,
-                }}
-              >
-                {organization.name}
-              </Badge>
-            </div>
-
-            <div className="absolute -bottom-4 -left-4 animate-bounce z-10">
-              <Badge
-                variant="outline"
-                className="shadow-lg backdrop-blur-sm border-2"
-                style={{
-                  backgroundColor: `${organization.color.secondary}15`,
-                  borderColor: organization.color.secondary,
-                  color: organization.color.secondary,
-                }}
-              >
-                {member.position.split(' ')[0]}
-              </Badge>
-            </div>
-
-            {member.skills && member.skills.length > 0 && (
-              <div 
-                className="absolute top-1/4 -right-6 animate-pulse z-10"
-                style={{ animationDelay: '700ms' }}
-              >
-                <Badge
-                  variant="outline"
-                  className="shadow-lg backdrop-blur-sm border-2"
-                  style={{
-                    backgroundColor: `${organization.color.accent}15`,
-                    borderColor: organization.color.accent,
-                    color: organization.color.accent,
-                  }}
-                >
-                  {member.skills[0]}
-                </Badge>
-              </div>
-            )}
-
-            {member.achievements && member.achievements.length > 0 && (
-              <div 
-                className="absolute bottom-1/3 -left-6 animate-bounce z-10"
-                style={{ animationDelay: '500ms' }}
-              >
-                <Badge
-                  variant="outline"
-                  className="shadow-lg backdrop-blur-sm border-2"
-                  style={{
-                    backgroundColor: `${organization.color.primary}15`,
-                    borderColor: organization.color.primary,
-                    color: organization.color.primary,
-                  }}
-                >
-                  <Award className="h-3 w-3 mr-1" />
-                  Top Performer
-                </Badge>
-              </div>
-            )}
+         
+         
 
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-border/20">
               <CldImage
