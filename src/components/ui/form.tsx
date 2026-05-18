@@ -23,11 +23,14 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
   {} as FormFieldContextValue
 )
 
-const FormField = ({ ...props }: React.ComponentProps<typeof Controller>) => (
-  <FormFieldContext.Provider value={{ name: String(props.name) }}>
-    <Controller {...props} />
-  </FormFieldContext.Provider>
-)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function FormField<T extends Record<string, any>>({ ...props }: T) {
+  return (
+    <FormFieldContext.Provider value={{ name: String(props.name) }}>
+      <Controller {...props} />
+    </FormFieldContext.Provider>
+  )
+}
 
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)

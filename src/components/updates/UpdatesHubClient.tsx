@@ -82,18 +82,6 @@ export default function UpdatesHubClient() {
     () => filterOrganizationsWithActivity(organizations, availableOrganizationIds),
     [availableOrganizationIds, organizations]
   );
-  const activeCategory = useMemo(
-    () => UPDATES_HUB_CATEGORY_OPTIONS.find((option) => option.value === filters.category),
-    [filters.category]
-  );
-  const activeScope = useMemo(
-    () => UPDATES_HUB_SCOPE_OPTIONS.find((option) => option.value === filters.scope),
-    [filters.scope]
-  );
-  const activeOrganization = useMemo(
-    () => availableOrganizations.find((organization) => organization.id === filters.org),
-    [availableOrganizations, filters.org]
-  );
 
   const updateFilters = (patch: Partial<UpdatesHubFilters>) => {
     const nextParams = createUpdatesHubSearchParams({

@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/updates-hub';
 import { cn } from '@/lib/utils';
 import { type UpdateFeedItem } from '@/lib/updates-hub';
-import { ContentOwnerType } from '@/types';
 
 interface UpdateFeedCardProps {
   item: UpdateFeedItem;
@@ -32,10 +31,6 @@ const kindConfig = {
 export default function UpdateFeedCard({ item }: UpdateFeedCardProps) {
   const config = kindConfig[item.kind];
   const Icon = config.icon;
-  const ownershipLabel =
-    item.ownerType === ContentOwnerType.SYSTEM
-      ? 'CICT Official'
-      : item.organizationName || 'Organization';
   const hasImage = !!item.image;
 
   return (
