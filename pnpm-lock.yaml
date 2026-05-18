@@ -122,9 +122,6 @@ importers:
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      table:
-        specifier: github:tanstack/react-table
-        version: git+https://git@github.com:tanstack/react-table.git#c06811af0998bc14f7699c7050a1b75e51a8be69
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.3.1
@@ -4061,10 +4058,6 @@ packages:
 
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
-
-  table@git+https://git@github.com:tanstack/react-table.git#c06811af0998bc14f7699c7050a1b75e51a8be69:
-    resolution: {commit: c06811af0998bc14f7699c7050a1b75e51a8be69, repo: git@github.com:tanstack/react-table.git, type: git}
-    version: 0.0.0
 
   tailwind-merge@2.6.0:
     resolution: {integrity: sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA==}
@@ -8576,8 +8569,6 @@ snapshots:
       use-sync-external-store: 1.5.0(react@19.1.0)
 
   symbol-tree@3.2.4: {}
-
-  table@git+https://git@github.com:tanstack/react-table.git#c06811af0998bc14f7699c7050a1b75e51a8be69: {}
 
   tailwind-merge@2.6.0: {}
 
