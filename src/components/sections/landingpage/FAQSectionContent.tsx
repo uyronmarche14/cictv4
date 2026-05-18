@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, ChevronDown, HelpCircle, ChevronRight } from 'lucide-react';
+import { Search, ChevronDown, HelpCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
