@@ -1,5 +1,6 @@
 'use client';
 
+import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { adminAPI } from '@/lib/api/admin';
@@ -9,25 +10,56 @@ import { useEffect, useState } from 'react';
 import { AdminModuleKey, DashboardSummary } from '@/types';
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading, isAuthenticated, canAccessAdmin } = useAuth();
   const { getVisibleAdminModules } = usePermissions();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
+    if (!isAuthenticated || !canAccessAdmin) {
+      setLoading(false);
+      setSummary(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    let isActive = true;
+
     const fetchSummary = async () => {
       try {
-        const response = await adminAPI.getDashboardSummary();
-        setSummary(response);
+        const response = await adminAPI.getDashboardSummary(controller.signal);
+        if (isActive) {
+          setSummary(response);
+        }
       } catch (error) {
+        if (!isActive || axios.isCancel(error)) {
+          return;
+        }
+
+        if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) {
+          return;
+        }
+
         console.error('Failed to fetch dashboard summary:', error);
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     };
 
     fetchSummary();
-  }, []);
+
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [authLoading, canAccessAdmin, isAuthenticated]);
 
   const visibleModules = summary?.visibleModules ?? getVisibleAdminModules();
 

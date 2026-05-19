@@ -1,5 +1,6 @@
 'use client';
 
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +8,7 @@ import * as z from 'zod';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api/axios';
+import { getApiErrorMessage } from '@/lib/api/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -69,13 +71,12 @@ export default function AdminLoginPage() {
         login(authProfile);
       }
     } catch (err: unknown) {
-      let errorMessage = 'Invalid email or password';
-      if (typeof err === 'object' && err !== null && 'response' in err) {
-        const errorObj = err as { response?: { data?: { message?: string } } };
-        if (errorObj.response?.data?.message) {
-          errorMessage = errorObj.response.data.message;
-        }
+      let errorMessage = getApiErrorMessage(err, 'Unable to log in right now. Please try again.');
+
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        errorMessage = 'Invalid email or password';
       }
+
       setError(errorMessage);
     } finally {
       setLoading(false);
