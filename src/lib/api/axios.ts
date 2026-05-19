@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { safePush } from '@/lib/navigation';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
@@ -7,15 +8,6 @@ const api = axios.create({
   },
   withCredentials: true,
 });
-
-api.interceptors.request.use(
-  (config) => {
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
 
 api.interceptors.response.use(
   (response) => response,
@@ -28,9 +20,12 @@ api.interceptors.response.use(
         ));
 
     if (shouldForceAdminLogout) {
-      // Only redirect to admin login if we are actually in the admin section
-      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
-        window.location.href = '/admin/login';
+      if (
+        typeof window !== 'undefined' &&
+        window.location.pathname.startsWith('/admin') &&
+        window.location.pathname !== '/admin/login'
+      ) {
+        safePush('/admin/login');
       }
     }
     return Promise.reject(error);

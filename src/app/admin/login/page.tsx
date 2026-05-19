@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api/axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,9 +22,16 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function AdminLoginPage() {
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/admin/dashboard');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const {
     register,

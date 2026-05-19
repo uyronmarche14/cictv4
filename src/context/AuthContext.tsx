@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import api from '../lib/api/axios';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 import type { AuthProfile, Permission, User } from '@/types';
 
@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [canAccessAdmin, setCanAccessAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const applyAuthProfile = useCallback((authProfile: AuthProfile) => {
     setUser(authProfile.user);
@@ -39,6 +40,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refreshProfile = useCallback(async (): Promise<AuthProfile | null> => {
+    if (typeof window !== 'undefined' && pathname === '/admin/login') {
+      return null;
+    }
     try {
       const response = await api.get<{ success: boolean; data: AuthProfile }>('/auth/profile');
       if (response.data.success) {
@@ -51,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return null;
-  }, [applyAuthProfile, clearAuthProfile]);
+  }, [applyAuthProfile, clearAuthProfile, pathname]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -80,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     clearAuthProfile();
-    router.push('/admin/login');
+    router.push('/');
   };
 
   const isAuthenticated = !!user;

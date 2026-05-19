@@ -2,9 +2,10 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Sidebar, MobileSidebar } from '@/components/admin/Sidebar';
 import { Loader2 } from 'lucide-react';
+import { registerNavigate, unregisterNavigate } from '@/lib/navigation';
 
 export default function AdminLayout({
   children,
@@ -15,17 +16,29 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   const isLoginPage = pathname === '/admin/login';
+  const prevAuthenticated = useRef(isAuthenticated);
+
+  useEffect(() => {
+    registerNavigate((url) => router.push(url));
+    return () => unregisterNavigate();
+  }, [router]);
 
   useEffect(() => {
     if (loading) return;
-    
+
     if (isLoginPage) return;
 
     if (!isAuthenticated) {
+      if (prevAuthenticated.current) {
+        prevAuthenticated.current = false;
+        return;
+      }
       router.push('/admin/login');
     } else if (!canAccessAdmin) {
       router.push('/');
     }
+
+    prevAuthenticated.current = isAuthenticated;
   }, [loading, isAuthenticated, canAccessAdmin, router, isLoginPage]);
 
   // Allow access to login page without checks
