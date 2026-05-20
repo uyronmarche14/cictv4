@@ -43,6 +43,7 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | NewsStatus>('all');
   const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
     hasPermission(Permission.VIEW_ANNOUNCEMENT) ? 'all' : ContentOwnerType.ORGANIZATION
   );
@@ -73,6 +74,7 @@ export default function AnnouncementsPage() {
           page,
           limit: 10,
           search,
+          status: statusFilter === 'all' ? undefined : statusFilter,
           ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
           organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
         },
@@ -86,7 +88,7 @@ export default function AnnouncementsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, ownerTypeFilter, organizationFilter]);
+  }, [page, search, statusFilter, ownerTypeFilter, organizationFilter]);
 
   const canActOnAnnouncement = (item: Announcement, permission: Permission) =>
     hasPermission(permission) ||
@@ -146,9 +148,20 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const handleWorkflowAction = async (id: string, action: 'publish' | 'archive') => {
+  const handleWorkflowAction = async (
+    id: string,
+    action: 'submit' | 'approve' | 'reject' | 'publish' | 'archive'
+  ) => {
     try {
-      await api.patch(`/announcements/${id}/${action}`);
+      if (action === 'reject') {
+        const reason = window.prompt('Enter rejection reason');
+        if (!reason?.trim()) {
+          return;
+        }
+        await api.patch(`/announcements/${id}/reject`, { reason: reason.trim() });
+      } else {
+        await api.patch(`/announcements/${id}/${action}`);
+      }
       fetchAnnouncements();
     } catch (error) {
       console.error(`Failed to ${action} announcement:`, error);
@@ -167,6 +180,25 @@ export default function AnnouncementsPage() {
         return <Badge variant="secondary">Low</Badge>;
       default:
         return <Badge>{priority}</Badge>;
+    }
+  };
+
+  const getStatusBadge = (status?: NewsStatus) => {
+    switch (status) {
+      case NewsStatus.PUBLISHED:
+        return <Badge className="bg-green-500">Published</Badge>;
+      case NewsStatus.DRAFT:
+        return <Badge variant="secondary">Draft</Badge>;
+      case NewsStatus.PENDING_APPROVAL:
+        return <Badge className="bg-amber-500">Pending Approval</Badge>;
+      case NewsStatus.APPROVED:
+        return <Badge className="bg-blue-600">Approved</Badge>;
+      case NewsStatus.REJECTED:
+        return <Badge className="bg-red-600">Rejected</Badge>;
+      case NewsStatus.ARCHIVED:
+        return <Badge variant="outline">Archived</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
@@ -234,6 +266,22 @@ export default function AnnouncementsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select
+                value={statusFilter}
+                onValueChange={(value: 'all' | NewsStatus) => setStatusFilter(value)}
+              >
+                <SelectTrigger className="w-[190px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {Object.values(NewsStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.replaceAll('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -244,6 +292,7 @@ export default function AnnouncementsPage() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Ownership</TableHead>
                   <TableHead>Target Audience</TableHead>
                   <TableHead>Expires At</TableHead>
@@ -253,13 +302,13 @@ export default function AnnouncementsPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : announcements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       No announcements found.
                     </TableCell>
                   </TableRow>
@@ -268,6 +317,7 @@ export default function AnnouncementsPage() {
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getPriorityBadge(item.priority)}</TableCell>
+                      <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
                           {getOwnershipLabel(item)}
@@ -302,7 +352,25 @@ export default function AnnouncementsPage() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            {item.status === NewsStatus.DRAFT && canActOnAnnouncement(item, Permission.PUBLISH_ANNOUNCEMENT) && (
+                            {item.status === NewsStatus.DRAFT &&
+                              canActOnAnnouncement(item, Permission.SUBMIT_CONTENT_FOR_APPROVAL) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'submit')}>
+                                Submit for approval
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.PENDING_APPROVAL &&
+                              hasPermission(Permission.APPROVE_CONTENT) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'approve')}>
+                                Approve
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.PENDING_APPROVAL &&
+                              hasPermission(Permission.REJECT_CONTENT) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'reject')}>
+                                Reject
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.APPROVED && canActOnAnnouncement(item, Permission.PUBLISH_ANNOUNCEMENT) && (
                               <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'publish')}>
                                 Publish
                               </DropdownMenuItem>

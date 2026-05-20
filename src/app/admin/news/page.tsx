@@ -43,6 +43,7 @@ export default function NewsPage() {
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | NewsStatus>('all');
   const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
     hasPermission(Permission.VIEW_NEWS) ? 'all' : ContentOwnerType.ORGANIZATION
   );
@@ -73,6 +74,7 @@ export default function NewsPage() {
           page,
           limit: 10,
           search,
+          status: statusFilter === 'all' ? undefined : statusFilter,
           ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
           organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
         },
@@ -86,7 +88,7 @@ export default function NewsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, ownerTypeFilter, organizationFilter]);
+  }, [page, search, statusFilter, ownerTypeFilter, organizationFilter]);
 
   const canActOnNews = (item: News, permission: Permission) =>
     hasPermission(permission) ||
@@ -146,9 +148,20 @@ export default function NewsPage() {
     }
   };
 
-  const handleWorkflowAction = async (id: string, action: 'publish' | 'archive') => {
+  const handleWorkflowAction = async (
+    id: string,
+    action: 'submit' | 'approve' | 'reject' | 'publish' | 'archive'
+  ) => {
     try {
-      await api.patch(`/news/${id}/${action}`);
+      if (action === 'reject') {
+        const reason = window.prompt('Enter rejection reason');
+        if (!reason?.trim()) {
+          return;
+        }
+        await api.patch(`/news/${id}/reject`, { reason: reason.trim() });
+      } else {
+        await api.patch(`/news/${id}/${action}`);
+      }
       fetchNews();
     } catch (error) {
       console.error(`Failed to ${action} news:`, error);
@@ -161,6 +174,12 @@ export default function NewsPage() {
         return <Badge className="bg-green-500">Published</Badge>;
       case NewsStatus.DRAFT:
         return <Badge variant="secondary">Draft</Badge>;
+      case NewsStatus.PENDING_APPROVAL:
+        return <Badge className="bg-amber-500">Pending Approval</Badge>;
+      case NewsStatus.APPROVED:
+        return <Badge className="bg-blue-600">Approved</Badge>;
+      case NewsStatus.REJECTED:
+        return <Badge className="bg-red-600">Rejected</Badge>;
       case NewsStatus.ARCHIVED:
         return <Badge variant="outline">Archived</Badge>;
       default:
@@ -229,6 +248,22 @@ export default function NewsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select
+                value={statusFilter}
+                onValueChange={(value: 'all' | NewsStatus) => setStatusFilter(value)}
+              >
+                <SelectTrigger className="w-[190px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {Object.values(NewsStatus).map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.replaceAll('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -293,7 +328,25 @@ export default function NewsPage() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            {item.status === NewsStatus.DRAFT && canActOnNews(item, Permission.PUBLISH_NEWS) && (
+                            {item.status === NewsStatus.DRAFT &&
+                              canActOnNews(item, Permission.SUBMIT_CONTENT_FOR_APPROVAL) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'submit')}>
+                                Submit for approval
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.PENDING_APPROVAL &&
+                              hasPermission(Permission.APPROVE_CONTENT) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'approve')}>
+                                Approve
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.PENDING_APPROVAL &&
+                              hasPermission(Permission.REJECT_CONTENT) && (
+                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'reject')}>
+                                Reject
+                              </DropdownMenuItem>
+                            )}
+                            {item.status === NewsStatus.APPROVED && canActOnNews(item, Permission.PUBLISH_NEWS) && (
                               <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'publish')}>
                                 Publish
                               </DropdownMenuItem>

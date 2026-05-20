@@ -441,7 +441,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                New articles are created as drafts and must be published separately.
+                New articles are created as drafts, submitted for approval, then published after approval.
               </p>
             )}
 

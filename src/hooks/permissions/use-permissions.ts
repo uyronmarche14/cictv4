@@ -45,11 +45,14 @@ const MODULE_KEYS: AdminModuleKey[] = [
   'dashboard',
   'organizations',
   'users',
+  'students',
   'events',
   'news',
   'announcements',
   'roles',
   'faq',
+  'logs',
+  'processes',
 ];
 
 const unique = <T,>(values: T[]) => Array.from(new Set(values));
@@ -230,6 +233,15 @@ export const usePermissions = () => {
     canSetUserStatus: () => hasPermission(Permission.SET_USER_STATUS),
     canUpdateOwnProfile: () => isAuthenticated,
     canAccessUsersModule: () => hasVisibleAdminModule('users'),
+    canReadStudents: () => hasPermission(Permission.VIEW_STUDENT),
+    canCreateStudent: () => hasPermission(Permission.CREATE_STUDENT),
+    canUpdateStudent: () => hasPermission(Permission.EDIT_STUDENT),
+    canSetStudentStatus: () => hasPermission(Permission.SET_STUDENT_STATUS),
+    canViewAcademicGroups: () =>
+      hasPermission(Permission.VIEW_ACADEMIC_GROUPS) ||
+      hasPermission(Permission.MANAGE_ACADEMIC_GROUPS),
+    canManageAcademicGroups: () => hasPermission(Permission.MANAGE_ACADEMIC_GROUPS),
+    canAccessStudentsModule: () => hasVisibleAdminModule('students'),
     canCreateRole: () => hasPermission(Permission.CREATE_ROLE),
     canReadRoles: () => hasPermission(Permission.VIEW_ROLE),
     canUpdateRole: () => hasPermission(Permission.EDIT_ROLE),
@@ -256,6 +268,8 @@ export const usePermissions = () => {
     canAccessNewsModule: () => hasVisibleAdminModule('news'),
     canAccessAnnouncementsModule: () => hasVisibleAdminModule('announcements'),
     canAccessEventsModule: () => hasVisibleAdminModule('events'),
+    canAccessLogsModule: () => hasVisibleAdminModule('logs'),
+    canAccessProcessesModule: () => hasVisibleAdminModule('processes'),
     canCreateAnnouncement: () => hasPermission(Permission.CREATE_ANNOUNCEMENT),
     canPublishAnnouncement: () => hasPermission(Permission.PUBLISH_ANNOUNCEMENT),
     canArchiveAnnouncement: () => hasPermission(Permission.ARCHIVE_ANNOUNCEMENT),

@@ -373,7 +373,7 @@ export function AnnouncementForm({
               <p className="font-medium text-foreground">
                 {ownerType === ContentOwnerType.SYSTEM
                   ? 'This announcement will appear as a system-wide CICT notice.'
-                  : `This announcement will appear under ${selectedOrganizationName} once published.`}
+                  : `This announcement will appear under ${selectedOrganizationName} after approval and publication.`}
               </p>
               <p className="mt-1 text-muted-foreground">
                 Pick organization-owned content for updates that should show up on organization tabs and organization homepages.

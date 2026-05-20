@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { adminAPI } from '@/lib/api/admin';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Newspaper, Megaphone, UserCog, Building2, CalendarDays } from "lucide-react";
+import { Users, Newspaper, Megaphone, UserCog, Building2, CalendarDays, GraduationCap } from "lucide-react";
 import { useEffect, useState } from 'react';
 import { AdminModuleKey, DashboardSummary } from '@/types';
 
@@ -77,6 +77,13 @@ export default function AdminDashboard() {
       description: 'News records',
       icon: Newspaper,
       value: summary?.cards.news ?? 0,
+    },
+    {
+      key: 'students',
+      title: 'Students',
+      description: 'Student records',
+      icon: GraduationCap,
+      value: summary?.cards.students ?? 0,
     },
     {
       key: 'announcements',

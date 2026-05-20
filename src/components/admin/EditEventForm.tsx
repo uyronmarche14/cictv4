@@ -43,16 +43,42 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 
-const formSchema = z.object({
-  title: z.string().min(2, 'Title must be at least 2 characters'),
-  bodyHtml: z.string().min(10, 'Description must be at least 10 characters'),
-  excerpt: z.string().min(10, 'Excerpt must be at least 10 characters').max(200, 'Excerpt too long'),
-  startDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
-  endDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
-  location: z.string().min(2, 'Location is required'),
-  maxAttendees: z.string().transform((val) => (val === '' ? undefined : parseInt(val, 10))).optional(),
-  tags: z.string().optional(),
-});
+const parseDateTimeLocalValue = (value: string): number => new Date(value).getTime();
+
+const formatDateTimeLocal = (value: string | Date): string => {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const formSchema = z
+  .object({
+    title: z.string().min(2, 'Title must be at least 2 characters'),
+    bodyHtml: z.string().min(10, 'Description must be at least 10 characters'),
+    excerpt: z.string().min(10, 'Excerpt must be at least 10 characters').max(200, 'Excerpt too long'),
+    startDate: z.string().refine((val) => !isNaN(parseDateTimeLocalValue(val)), 'Invalid start date'),
+    endDate: z.string().refine((val) => !isNaN(parseDateTimeLocalValue(val)), 'Invalid end date'),
+    location: z.string().min(2, 'Location is required'),
+    maxAttendees: z.string().transform((val) => (val === '' ? undefined : parseInt(val, 10))).optional(),
+    tags: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    const start = parseDateTimeLocalValue(values.startDate);
+    const end = parseDateTimeLocalValue(values.endDate);
+
+    if (!isNaN(start) && !isNaN(end) && start > end) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['endDate'],
+        message: 'End date/time must be the same as or later than the start date/time',
+      });
+    }
+  });
 
 interface EditEventFormProps {
   event: Event;
@@ -99,8 +125,8 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
       title: event.title,
       bodyHtml: event.bodyHtml || event.description || '',
       excerpt: event.excerpt,
-      startDate: new Date(event.startDate).toISOString().slice(0, 16),
-      endDate: new Date(event.endDate).toISOString().slice(0, 16),
+      startDate: formatDateTimeLocal(event.startDate),
+      endDate: formatDateTimeLocal(event.endDate),
       location: event.location,
       maxAttendees: event.maxAttendees || undefined,
       tags: event.tags.join(', '),
@@ -238,7 +264,14 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
       onSuccess();
     } catch (error) {
       console.error('Failed to update event:', error);
-      toast.error('Failed to update event');
+      const message =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (error as { response?: { data?: { message?: string } } }).response!.data!.message!
+          : 'Failed to update event';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -309,8 +342,8 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
             <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm">
               <p className="font-medium text-foreground">
                 {ownerType === ContentOwnerType.SYSTEM
-                  ? 'This event will appear as a system-wide CICT event once published.'
-                  : `This event will appear under ${selectedOrganizationName} once published.`}
+                  ? 'This event will appear as a system-wide CICT event after approval and publication.'
+                  : `This event will appear under ${selectedOrganizationName} after approval and publication.`}
               </p>
               <p className="mt-1 text-muted-foreground">
                 Pick organization-owned content for events that should show up on student organization tabs and organization homepages.

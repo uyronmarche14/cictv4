@@ -36,6 +36,7 @@ export default function AdminEventsPage() {
   } = usePermissions();
   const { organizations } = useOrganizations();
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'all' | Event['status']>('all');
   const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
     hasPermission(Permission.VIEW_EVENT) ? 'all' : ContentOwnerType.ORGANIZATION
   );
@@ -56,10 +57,11 @@ export default function AdminEventsPage() {
     : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
   
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'events', ownerTypeFilter, organizationFilter],
+    queryKey: ['admin', 'events', ownerTypeFilter, organizationFilter, statusFilter],
     queryFn: () =>
       eventAPI.getAll({
         limit: 100,
+        status: statusFilter === 'all' ? undefined : statusFilter,
         ownerType: ownerTypeFilter,
         organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
       }),
@@ -86,20 +88,61 @@ export default function AdminEventsPage() {
     setEditingEvent(event);
   };
 
-  const handleWorkflowAction = async (id: string, action: 'publish' | 'cancel' | 'complete') => {
+  const handleWorkflowAction = async (
+    id: string,
+    action: 'submit' | 'approve' | 'reject' | 'publish' | 'cancel' | 'complete'
+  ) => {
     try {
-      if (action === 'publish') {
+      if (action === 'submit') {
+        await eventAPI.submit(id);
+      } else if (action === 'approve') {
+        await eventAPI.approve(id);
+      } else if (action === 'reject') {
+        const reason = window.prompt('Enter rejection reason');
+        if (!reason?.trim()) {
+          return;
+        }
+        await eventAPI.reject(id, { reason: reason.trim() });
+      } else if (action === 'publish') {
         await eventAPI.publish(id);
       } else if (action === 'cancel') {
         await eventAPI.cancel(id);
       } else {
         await eventAPI.complete(id);
       }
-      const successLabel = action === 'publish' ? 'published' : action === 'cancel' ? 'cancelled' : 'completed';
+      const successLabel =
+        action === 'submit'
+          ? 'submitted for approval'
+          : action === 'approve'
+            ? 'approved'
+            : action === 'reject'
+              ? 'rejected'
+              : action === 'publish'
+                ? 'published'
+                : action === 'cancel'
+                  ? 'cancelled'
+                  : 'completed';
       toast.success(`Event ${successLabel} successfully`);
       refetch();
     } catch {
       toast.error(`Failed to ${action} event`);
+    }
+  };
+
+  const getStatusBadge = (status: Event['status']) => {
+    switch (status) {
+      case 'published':
+        return <Badge>Published</Badge>;
+      case 'draft':
+        return <Badge variant="secondary">Draft</Badge>;
+      case 'pending_approval':
+        return <Badge className="bg-amber-500">Pending Approval</Badge>;
+      case 'approved':
+        return <Badge className="bg-blue-600">Approved</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-600">Rejected</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -175,6 +218,30 @@ export default function AdminEventsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select
+                value={statusFilter}
+                onValueChange={(value: 'all' | Event['status']) => setStatusFilter(value)}
+              >
+                <SelectTrigger className="w-[190px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  {[
+                    'draft',
+                    'pending_approval',
+                    'approved',
+                    'rejected',
+                    'published',
+                    'cancelled',
+                    'completed',
+                  ].map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.replaceAll('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -226,7 +293,7 @@ export default function AdminEventsPage() {
                       <TableCell>
                           <div className="flex items-center gap-1">
                               <Users className="w-3 h-3 text-muted-foreground" />
-                              {event.attendees.length}
+                              {event.registeredCount ?? event.attendees.length}
                           </div>
                       </TableCell>
                       <TableCell>
@@ -234,14 +301,7 @@ export default function AdminEventsPage() {
                           {getOwnershipLabel(event)}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={
-                            event.status === 'published' ? 'default' : 
-                            event.status === 'draft' ? 'secondary' : 'outline'
-                        }>
-                          {event.status}
-                        </Badge>
-                      </TableCell>
+                      <TableCell>{getStatusBadge(event.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                             <Button 
@@ -252,7 +312,35 @@ export default function AdminEventsPage() {
                             >
                                 <Edit className="w-4 h-4" />
                             </Button>
-                            {event.status === 'draft' && canActOnEvent(event, Permission.PUBLISH_EVENT) && (
+                            {event.status === 'draft' &&
+                              canActOnEvent(event, Permission.SUBMIT_CONTENT_FOR_APPROVAL) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWorkflowAction(event._id, 'submit')}
+                              >
+                                Submit
+                              </Button>
+                            )}
+                            {event.status === 'pending_approval' && hasPermission(Permission.APPROVE_CONTENT) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWorkflowAction(event._id, 'approve')}
+                              >
+                                Approve
+                              </Button>
+                            )}
+                            {event.status === 'pending_approval' && hasPermission(Permission.REJECT_CONTENT) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleWorkflowAction(event._id, 'reject')}
+                              >
+                                Reject
+                              </Button>
+                            )}
+                            {event.status === 'approved' && canActOnEvent(event, Permission.PUBLISH_EVENT) && (
                               <Button
                                 variant="ghost"
                                 size="sm"

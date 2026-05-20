@@ -44,16 +44,31 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 
-const formSchema = z.object({
-  title: z.string().min(2, 'Title must be at least 2 characters'),
-  bodyHtml: z.string().min(10, 'Description must be at least 10 characters'),
-  excerpt: z.string().min(10, 'Excerpt must be at least 10 characters').max(200, 'Excerpt too long'),
-  startDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
-  endDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date'),
-  location: z.string().min(2, 'Location is required'),
-  maxAttendees: z.string().transform((val) => (val === '' ? undefined : parseInt(val, 10))).optional(),
-  tags: z.string().optional(),
-});
+const parseDateTimeLocalValue = (value: string): number => new Date(value).getTime();
+
+const formSchema = z
+  .object({
+    title: z.string().min(2, 'Title must be at least 2 characters'),
+    bodyHtml: z.string().min(10, 'Description must be at least 10 characters'),
+    excerpt: z.string().min(10, 'Excerpt must be at least 10 characters').max(200, 'Excerpt too long'),
+    startDate: z.string().refine((val) => !isNaN(parseDateTimeLocalValue(val)), 'Invalid start date'),
+    endDate: z.string().refine((val) => !isNaN(parseDateTimeLocalValue(val)), 'Invalid end date'),
+    location: z.string().min(2, 'Location is required'),
+    maxAttendees: z.string().transform((val) => (val === '' ? undefined : parseInt(val, 10))).optional(),
+    tags: z.string().optional(),
+  })
+  .superRefine((values, ctx) => {
+    const start = parseDateTimeLocalValue(values.startDate);
+    const end = parseDateTimeLocalValue(values.endDate);
+
+    if (!isNaN(start) && !isNaN(end) && start > end) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['endDate'],
+        message: 'End date/time must be the same as or later than the start date/time',
+      });
+    }
+  });
 
 interface EventFormProps {
   onSuccess: () => void;
@@ -259,7 +274,14 @@ export function EventForm({ onSuccess }: EventFormProps) {
       onSuccess();
     } catch (error) {
       console.error('Failed to create event:', error);
-      toast.error('Failed to create event');
+      const message =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (error as { response?: { data?: { message?: string } } }).response!.data!.message!
+          : 'Failed to create event';
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -342,8 +364,8 @@ export function EventForm({ onSuccess }: EventFormProps) {
             <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm">
               <p className="font-medium text-foreground">
                 {ownerType === ContentOwnerType.SYSTEM
-                  ? 'This event will appear as a system-wide CICT event once published.'
-                  : `This event will appear under ${selectedOrganizationName} once published.`}
+                  ? 'This event will appear as a system-wide CICT event after approval and publication.'
+                  : `This event will appear under ${selectedOrganizationName} after approval and publication.`}
               </p>
               <p className="mt-1 text-muted-foreground">
                 Pick organization-owned content for events that should show up on student organization tabs and organization homepages.

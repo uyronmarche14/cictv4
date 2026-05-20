@@ -1,5 +1,11 @@
 import api from './axios';
-import { ContentOwnerType, ContentSection, EventScheduleItem, MediaAsset } from '@/types';
+import {
+  ApprovalSummary,
+  ContentOwnerType,
+  ContentSection,
+  EventScheduleItem,
+  MediaAsset,
+} from '@/types';
 
 export type EventMutationPayload = {
   title: string;
@@ -41,9 +47,25 @@ export interface Event {
   startDate: string;
   endDate: string;
   location: string;
-  status: 'draft' | 'published' | 'cancelled' | 'completed';
+  status:
+    | 'draft'
+    | 'pending_approval'
+    | 'approved'
+    | 'rejected'
+    | 'published'
+    | 'cancelled'
+    | 'completed';
   attendees: Array<string | { id?: string; _id?: string }>;
   maxAttendees: number;
+  registeredCount?: number;
+  checkedInCount?: number;
+  registrationCloseAt?: string;
+  allowWalkIns?: boolean;
+  targetProgramIds?: string[];
+  targetYearLevelIds?: string[];
+  targetSectionIds?: string[];
+  approvalSummary?: ApprovalSummary;
+  processInstanceId?: string | null;
   coverImage?: MediaAsset;
   gallery: MediaAsset[];
   sections: ContentSection[];
@@ -112,6 +134,21 @@ export const eventAPI = {
 
   publish: async (id: string) => {
     const response = await api.patch<SingleEventResponse>(`/events/${id}/publish`);
+    return response.data;
+  },
+
+  submit: async (id: string, payload?: { comment?: string }) => {
+    const response = await api.patch<SingleEventResponse>(`/events/${id}/submit`, payload ?? {});
+    return response.data;
+  },
+
+  approve: async (id: string, payload?: { comment?: string }) => {
+    const response = await api.patch<SingleEventResponse>(`/events/${id}/approve`, payload ?? {});
+    return response.data;
+  },
+
+  reject: async (id: string, payload: { reason: string; comment?: string }) => {
+    const response = await api.patch<SingleEventResponse>(`/events/${id}/reject`, payload);
     return response.data;
   },
 

@@ -14,6 +14,32 @@ export const fallbackPermissionMetadataGroups: PermissionMetadataGroup[] = [
     ],
   },
   {
+    key: 'students',
+    label: 'Students',
+    permissions: [
+      { value: Permission.VIEW_STUDENT, label: 'View students', description: 'See student records in admin.' },
+      { value: Permission.CREATE_STUDENT, label: 'Create students', description: 'Provision student accounts.' },
+      { value: Permission.EDIT_STUDENT, label: 'Edit students', description: 'Update student identity and academic data.' },
+      { value: Permission.SET_STUDENT_STATUS, label: 'Set student status', description: 'Activate, deactivate, or suspend student accounts.' },
+    ],
+  },
+  {
+    key: 'academic',
+    label: 'Academic Groups',
+    permissions: [
+      {
+        value: Permission.VIEW_ACADEMIC_GROUPS,
+        label: 'View academic groups',
+        description: 'See programs, year levels, and sections.',
+      },
+      {
+        value: Permission.MANAGE_ACADEMIC_GROUPS,
+        label: 'Manage academic groups',
+        description: 'Create and update programs, year levels, and sections.',
+      },
+    ],
+  },
+  {
     key: 'roles',
     label: 'Roles',
     permissions: [
@@ -78,6 +104,84 @@ export const fallbackPermissionMetadataGroups: PermissionMetadataGroup[] = [
       { value: Permission.PUBLISH_EVENT, label: 'Publish events', description: 'Publish draft events.' },
       { value: Permission.CANCEL_EVENT, label: 'Cancel events', description: 'Cancel published events.' },
       { value: Permission.COMPLETE_EVENT, label: 'Complete events', description: 'Complete published events.' },
+      {
+        value: Permission.VIEW_EVENT_REGISTRATIONS,
+        label: 'View registrations',
+        description: 'See event registration and attendance lists.',
+      },
+      {
+        value: Permission.MANAGE_EVENT_REGISTRATIONS,
+        label: 'Manage registrations',
+        description: 'Manage event registrations and walk-ins.',
+      },
+      {
+        value: Permission.SCAN_EVENT_ATTENDANCE,
+        label: 'Scan attendance',
+        description: 'Use the event attendance scanner.',
+      },
+    ],
+  },
+  {
+    key: 'workflow',
+    label: 'Workflow',
+    permissions: [
+      {
+        value: Permission.SUBMIT_CONTENT_FOR_APPROVAL,
+        label: 'Submit for approval',
+        description: 'Submit content drafts into the approval queue.',
+      },
+      {
+        value: Permission.APPROVE_CONTENT,
+        label: 'Approve content',
+        description: 'Approve submitted content.',
+      },
+      {
+        value: Permission.REJECT_CONTENT,
+        label: 'Reject content',
+        description: 'Reject submitted content with a reason.',
+      },
+    ],
+  },
+  {
+    key: 'process',
+    label: 'Process',
+    permissions: [
+      {
+        value: Permission.VIEW_PROCESS,
+        label: 'View process module',
+        description: 'See process templates and instances.',
+      },
+      {
+        value: Permission.CREATE_PROCESS,
+        label: 'Create process',
+        description: 'Create process templates or instances.',
+      },
+      {
+        value: Permission.EDIT_PROCESS,
+        label: 'Edit process',
+        description: 'Update process templates or instances.',
+      },
+      {
+        value: Permission.COMMENT_PROCESS,
+        label: 'Comment on process',
+        description: 'Add process comments and review notes.',
+      },
+      {
+        value: Permission.APPROVE_PROCESS_STEP,
+        label: 'Approve process steps',
+        description: 'Approve workflow steps inside a process instance.',
+      },
+    ],
+  },
+  {
+    key: 'logs',
+    label: 'Activity Logs',
+    permissions: [
+      {
+        value: Permission.VIEW_LOGS,
+        label: 'View activity logs',
+        description: 'See and search the admin activity audit trail.',
+      },
     ],
   },
   {

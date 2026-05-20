@@ -51,6 +51,24 @@ export enum Permission {
   COMPLETE_EVENT = 'complete_event',
   JOIN_EVENT = 'join_event',
 
+  VIEW_STUDENT = 'view_student',
+  CREATE_STUDENT = 'create_student',
+  EDIT_STUDENT = 'edit_student',
+  SET_STUDENT_STATUS = 'set_student_status',
+  VIEW_ACADEMIC_GROUPS = 'view_academic_groups',
+  MANAGE_ACADEMIC_GROUPS = 'manage_academic_groups',
+  VIEW_EVENT_REGISTRATIONS = 'view_event_registrations',
+  MANAGE_EVENT_REGISTRATIONS = 'manage_event_registrations',
+  SCAN_EVENT_ATTENDANCE = 'scan_event_attendance',
+  SUBMIT_CONTENT_FOR_APPROVAL = 'submit_content_for_approval',
+  APPROVE_CONTENT = 'approve_content',
+  REJECT_CONTENT = 'reject_content',
+  VIEW_PROCESS = 'view_process',
+  CREATE_PROCESS = 'create_process',
+  EDIT_PROCESS = 'edit_process',
+  COMMENT_PROCESS = 'comment_process',
+  APPROVE_PROCESS_STEP = 'approve_process_step',
+
   // Role Management
   CREATE_ROLE = 'create_role',
   EDIT_ROLE = 'edit_role',
@@ -67,11 +85,14 @@ export type AdminModuleKey =
   | 'dashboard'
   | 'organizations'
   | 'users'
+  | 'students'
   | 'events'
   | 'news'
   | 'announcements'
   | 'roles'
-  | 'faq';
+  | 'faq'
+  | 'logs'
+  | 'processes';
 
 export interface AdminScopes {
   global: boolean;
@@ -186,6 +207,9 @@ export interface OrganizationAdminAssignment extends OrganizationAssignment {
 
 export enum NewsStatus {
   DRAFT = 'draft',
+  PENDING_APPROVAL = 'pending_approval',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
   PUBLISHED = 'published',
   ARCHIVED = 'archived',
 }
@@ -203,6 +227,8 @@ export interface News {
   status: NewsStatus;
   publishedAt?: string;
   archivedAt?: string;
+  approvalSummary?: ApprovalSummary;
+  processInstanceId?: string | null;
   tags: string[];
   coverImage?: MediaAsset;
   gallery: MediaAsset[];
@@ -247,8 +273,20 @@ export interface Announcement {
   status?: NewsStatus;
   publishedAt?: string;
   archivedAt?: string;
+  approvalSummary?: ApprovalSummary;
+  processInstanceId?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ApprovalSummary {
+  submittedAt?: string;
+  submittedBy?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  rejectedAt?: string;
+  rejectedBy?: string;
+  rejectionReason?: string;
 }
 
 export interface FAQTopic {
@@ -322,9 +360,105 @@ export interface Organization {
   updatedAt: string;
 }
 
+export enum StudentStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}
+
+export interface Program {
+  _id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface YearLevel {
+  _id: string;
+  code: string;
+  label: string;
+  numericLevel: number;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Section {
+  _id: string;
+  programId:
+    | string
+    | {
+        _id: string;
+        code: string;
+        name: string;
+      };
+  yearLevelId:
+    | string
+    | {
+        _id: string;
+        code: string;
+        label: string;
+        numericLevel: number;
+      };
+  name: string;
+  displayName: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Student {
+  _id: string;
+  studentNumber: string;
+  email?: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  programId:
+    | string
+    | {
+        _id: string;
+        code: string;
+        name: string;
+      };
+  yearLevelId:
+    | string
+    | {
+        _id: string;
+        code: string;
+        label: string;
+        numericLevel: number;
+      };
+  sectionId:
+    | string
+    | {
+        _id: string;
+        name: string;
+        displayName: string;
+      };
+  status: StudentStatus;
+  isActive: boolean;
+  lastLoginAt?: string;
+  qrVersion: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StudentAuthProfile {
+  accessToken: string;
+  refreshToken: string;
+  student: Student;
+}
+
 export interface DashboardSummary {
   cards: {
     users: number;
+    students: number;
     news: number;
     announcements: number;
     roles: number;

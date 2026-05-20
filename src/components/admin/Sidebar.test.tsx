@@ -44,10 +44,13 @@ vi.mock('@/hooks/permissions/use-permissions', () => ({
   usePermissions: () => ({
     canAccessOrganizationsModule: () => false,
     canAccessUsersModule: () => false,
+    canAccessStudentsModule: () => false,
     canAccessEventsModule: () => true,
     canAccessNewsModule: () => true,
     canAccessAnnouncementsModule: () => false,
     canAccessRolesModule: () => false,
+    canAccessLogsModule: () => false,
+    canAccessProcessesModule: () => false,
     canManageSettings: () => false,
   }),
 }));

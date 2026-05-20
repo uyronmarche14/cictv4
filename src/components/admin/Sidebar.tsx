@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   Users,
+  GraduationCap,
   Newspaper,
   Megaphone,
   HelpCircle,
@@ -16,7 +17,9 @@ import {
   UserCog,
   Menu,
   Calendar,
-  Building2 // New Import
+  Building2,
+  ScrollText,
+  Workflow,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,10 +40,13 @@ const buildRoutes = (
   permissions: {
     canAccessOrganizationsModule: () => boolean;
     canAccessUsersModule: () => boolean;
+    canAccessStudentsModule: () => boolean;
     canAccessEventsModule: () => boolean;
     canAccessNewsModule: () => boolean;
     canAccessAnnouncementsModule: () => boolean;
     canAccessRolesModule: () => boolean;
+    canAccessLogsModule: () => boolean;
+    canAccessProcessesModule: () => boolean;
     canManageSettings: () => boolean;
   }
 ): AdminRoute[] => [
@@ -64,6 +70,13 @@ const buildRoutes = (
     icon: Users,
     active: pathname.startsWith('/admin/users'),
     visible: permissions.canAccessUsersModule(),
+  },
+  {
+    href: '/admin/students',
+    label: 'Students',
+    icon: GraduationCap,
+    active: pathname.startsWith('/admin/students'),
+    visible: permissions.canAccessStudentsModule(),
   },
   {
     href: '/admin/events',
@@ -92,6 +105,20 @@ const buildRoutes = (
     icon: UserCog,
     active: pathname.startsWith('/admin/roles'),
     visible: permissions.canAccessRolesModule(),
+  },
+  {
+    href: '/admin/logs',
+    label: 'Activity Logs',
+    icon: ScrollText,
+    active: pathname.startsWith('/admin/logs'),
+    visible: permissions.canAccessLogsModule(),
+  },
+  {
+    href: '/admin/processes',
+    label: 'Process',
+    icon: Workflow,
+    active: pathname.startsWith('/admin/processes'),
+    visible: permissions.canAccessProcessesModule(),
   },
   {
     href: '/admin/faq',
