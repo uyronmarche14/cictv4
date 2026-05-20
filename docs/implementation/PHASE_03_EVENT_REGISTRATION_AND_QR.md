@@ -6,15 +6,18 @@ Add student event registration with event-specific QR issuance and capacity-safe
 
 ## Current Status
 
-In progress.
+Complete.
 
 - Backend registration model and core registration APIs exist.
 - Student registration listing, own registration lookup, cancellation, and QR payload generation exist.
 - Event capacity and eligibility checks exist in the backend foundation.
-- Remaining work:
-  - admin registration tabs and management UX
-  - richer student-facing registration UX
-  - final verification of the full registration flow from UI to attendance
+- Admin event detail page with registrations tab at `/admin/events/[id]`.
+- Student portal at `/student/login`, `/student/events`, `/student/events/[id]`, `/student/registrations`, `/student/events/[id]/qr`.
+- QR code display using `qrcode.react` with download support.
+- Admin scan page at `/admin/events/[id]/scan` with manual check-in fallback.
+- Public EventCard and event detail page now link to the student portal for registration.
+- Legacy `/join` and `/leave` deprecated, redirect to student registration flow.
+- Admin EventForm and EditEventForm expose registration settings (open/close, walk-ins).
 
 ## Dependencies
 

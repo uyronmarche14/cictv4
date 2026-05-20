@@ -36,20 +36,16 @@ This document captures the current event feature set across backend, admin, and 
 - Backend controller: `/home/ronmarche14/projects/CICT/cict-backend/src/controllers/event.controller.ts`
 - Backend routes: `/home/ronmarche14/projects/CICT/cict-backend/src/routes/event.routes.ts`
 
+## Recent completions (Phase 3)
+
+- Public `/events` page now passes `upcoming: true` to filter future-only events.
+- Registration flow is complete end-to-end:
+  - Admin forms expose `isRegistrationOpen`, `allowWalkIns`, and `registrationCloseAt`.
+  - Student portal at `/student/*` provides browse, register, cancel, and QR display.
+  - Admin event detail at `/admin/events/[id]` shows registrations tab.
+  - Legacy `/join` and `/leave` routes now return a deprecation message instead of 410.
+
 ## Current gaps
-
-### 1. Upcoming logic is incomplete
-
-The public `/events` page is framed as an upcoming-events page, but it currently fetches all published events instead of future-only events. The UI can already detect whether an event is past, so the display and the data query are not aligned.
-
-### 2. Registration flow is only partial
-
-- The backend stores `isRegistrationOpen`.
-- The admin forms do not expose that field.
-- Join/leave routes exist, but the controller currently returns a disabled response.
-- The public event detail page explicitly says registration is not part of the MVP.
-
-This means the platform looks like it supports participation tracking, but that flow is not actually live end to end.
 
 ### 3. The model is still too narrow for real campus events
 

@@ -1,17 +1,38 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { eventAPI } from '@/lib/api/event';
+import { studentRegistrationAPI, StudentRegistration } from '@/lib/api/student';
 import { EventCard } from '@/components/events/EventCard';
 import MeshGradientBg from '@/components/ripplebg';
 import { Loader2 } from 'lucide-react';
+import { useStudentAuth } from '@/context/StudentAuthContext';
 
 export default function EventsPage() {
+  const { isAuthenticated: isStudent } = useStudentAuth();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['events', 'published'],
-    queryFn: () => eventAPI.getAll({ status: 'published' }),
+    queryFn: () => eventAPI.getAll({ status: 'published', upcoming: true }),
     staleTime: 0,
   });
+
+  const { data: registrations } = useQuery({
+    queryKey: ['student', 'registrations'],
+    queryFn: () => studentRegistrationAPI.getAll(),
+    enabled: isStudent,
+  });
+
+  const registrationMap = useMemo(() => {
+    if (!registrations) return new Map<string, StudentRegistration>();
+    const map = new Map<string, StudentRegistration>();
+    registrations.forEach((reg) => {
+      const eventId = typeof reg.eventId === 'string' ? reg.eventId : (reg.eventId as { _id: string })._id;
+      map.set(eventId, reg);
+    });
+    return map;
+  }, [registrations]);
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
@@ -42,7 +63,11 @@ export default function EventsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {data?.data.events.map((event) => (
-              <EventCard key={event._id} event={event} />
+              <EventCard
+                key={event._id}
+                event={event}
+                registration={registrationMap.get(event._id) ?? null}
+              />
             ))}
           </div>
         )}

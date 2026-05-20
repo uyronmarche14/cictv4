@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthContext";
+import { StudentAuthProvider } from "@/context/StudentAuthContext";
 import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
 import MainLayout from "@/components/layout/MainLayout";
 import "./globals.css";
@@ -20,11 +21,13 @@ export default function RootLayout({
       <body className="antialiased">
         <ReactQueryProvider>
           <AuthProvider>
-            <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-              <MainLayout>
-                {children}
-              </MainLayout>
-            </ThemeProvider>
+            <StudentAuthProvider>
+              <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+                <MainLayout>
+                  {children}
+                </MainLayout>
+              </ThemeProvider>
+            </StudentAuthProvider>
           </AuthProvider>
         </ReactQueryProvider>
       </body>

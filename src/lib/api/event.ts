@@ -18,6 +18,11 @@ export type EventMutationPayload = {
   maxAttendees?: number;
   tags?: string[];
   isRegistrationOpen?: boolean;
+  allowWalkIns?: boolean;
+  registrationCloseAt?: string;
+  targetProgramIds?: string[];
+  targetYearLevelIds?: string[];
+  targetSectionIds?: string[];
   ownerType?: ContentOwnerType;
   organizationId?: string | null;
   coverImage?: MediaAsset;

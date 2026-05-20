@@ -16,9 +16,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash, Edit, MapPin, Users } from "lucide-react";
+import { Trash, Edit, MapPin, Users, Eye, CheckCircle } from "lucide-react";
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import Link from 'next/link';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { ContentOwnerType, Permission } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -254,6 +255,7 @@ export default function AdminEventsPage() {
                   <TableHead>Date</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Attendees</TableHead>
+                  <TableHead>Checked In</TableHead>
                   <TableHead>Ownership</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -262,13 +264,13 @@ export default function AdminEventsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : activeEvents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No events found.
                     </TableCell>
                   </TableRow>
@@ -276,7 +278,9 @@ export default function AdminEventsPage() {
                   activeEvents.map((event) => (
                     <TableRow key={event._id}>
                       <TableCell className="font-medium max-w-[200px] truncate">
-                        {event.title}
+                        <Link href={`/admin/events/${event._id}`} className="hover:text-primary transition-colors">
+                          {event.title}
+                        </Link>
                       </TableCell>
                       <TableCell>
                          <div className="flex flex-col text-sm">
@@ -297,6 +301,12 @@ export default function AdminEventsPage() {
                           </div>
                       </TableCell>
                       <TableCell>
+                          <div className="flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3 text-muted-foreground" />
+                              {event.checkedInCount ?? 0}
+                          </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant="outline">
                           {getOwnershipLabel(event)}
                         </Badge>
@@ -304,6 +314,15 @@ export default function AdminEventsPage() {
                       <TableCell>{getStatusBadge(event.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                            <Button 
+                                variant="ghost" 
+                                size="icon"
+                                asChild
+                            >
+                                <Link href={`/admin/events/${event._id}`}>
+                                  <Eye className="w-4 h-4" />
+                                </Link>
+                            </Button>
                             <Button 
                                 variant="ghost" 
                                 size="icon"

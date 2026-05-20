@@ -26,6 +26,14 @@ This folder documents the current `cictv4` frontend, especially the public edito
 - `/student-life`
 - `/contact`
 
+### Student portal routes
+
+- `/student/login`
+- `/student/events`
+- `/student/events/[id]`
+- `/student/events/[id]/qr`
+- `/student/registrations`
+
 ### Admin routes
 
 - `/admin/dashboard`

@@ -1,29 +1,59 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventAPI } from '@/lib/api/event';
+import { studentEventAPI } from '@/lib/api/student';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, Info } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, Info, ExternalLink, QrCode, XCircle, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 import { format } from 'date-fns';
 import MeshGradientBg from '@/components/ripplebg';
 import Image from 'next/image';
 import { StructuredContent } from '@/components/StructuredContent';
 import ScrollingGallery from '@/components/ScrollingGallery';
 import { getOwnershipLabel } from '@/lib/content-ownership';
+import { useStudentAuth } from '@/context/StudentAuthContext';
+import { toast } from 'sonner';
 
 export default function EventDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const eventId = params.id as string;
+  const { isAuthenticated: isStudent, loading: studentLoading } = useStudentAuth();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['event', eventId],
     queryFn: () => eventAPI.getById(eventId),
     enabled: !!eventId,
     staleTime: 0,
+  });
+
+  const { data: registration } = useQuery({
+    queryKey: ['student', 'registration', eventId],
+    queryFn: () => studentEventAPI.getRegistration(eventId),
+    enabled: !!eventId && isStudent,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: () => studentEventAPI.register(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
+      toast.success('Successfully registered for this event!');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Registration failed'),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => studentEventAPI.cancelRegistration(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
+      toast.success('Registration cancelled');
+    },
+    onError: (err: any) => toast.error(err?.response?.data?.message || 'Cancellation failed'),
   });
 
   const event = data?.data.event;
@@ -102,6 +132,14 @@ export default function EventDetailsPage() {
                 <Badge variant="outline">
                   {getOwnershipLabel(event)}
                 </Badge>
+                {registration && (registration.status === 'registered' || registration.status === 'checked_in') && (
+                  <Badge className={registration.status === 'checked_in' ? 'bg-blue-600' : 'bg-green-600'}>
+                    {registration.status === 'checked_in' ? 'Checked In' : 'Registered'}
+                  </Badge>
+                )}
+                {registration?.status === 'cancelled' && (
+                  <Badge variant="secondary">Cancelled</Badge>
+                )}
               </div>
             </div>
 
@@ -137,8 +175,8 @@ export default function EventDetailsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Attendance</p>
                   <p className="font-medium">
-                    {event.attendees.length}
-                    {event.maxAttendees > 0 ? ` / ${event.maxAttendees}` : ''} Interested
+                    {event.registeredCount ?? event.attendees.length}
+                    {event.maxAttendees > 0 ? ` / ${event.maxAttendees}` : ''} registered
                   </p>
                 </div>
               </div>
@@ -199,16 +237,148 @@ export default function EventDetailsPage() {
             ) : null}
 
             <div className="pt-6 border-t">
-              <div className="rounded-xl border bg-secondary/20 p-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2 font-medium text-foreground mb-2">
+              <div className="rounded-xl border bg-secondary/20 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium text-foreground mb-3">
                   <Info className="w-4 h-4 text-primary" />
-                  Event participation
+                  Event Registration
                 </div>
-                <p>
-                  {isPast
-                    ? 'This event has ended. Public registration is not part of the current MVP.'
-                    : 'Public event registration is not part of the current MVP yet. Please contact the event organizer or CICT admin for participation details.'}
-                </p>
+                {isPast ? (
+                  <p className="text-muted-foreground">This event has ended.</p>
+                ) : studentLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Checking registration...</span>
+                  </div>
+                ) : isStudent ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
+                        {event.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}
+                      </Badge>
+                      {event.allowWalkIns && (
+                        <Badge variant="outline">Walk-ins Allowed</Badge>
+                      )}
+                      {event.registrationCloseAt && event.isRegistrationOpen && (
+                        <Badge variant="outline">
+                          Closes {format(new Date(event.registrationCloseAt), 'MMM dd, h:mm a')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">
+                      {event.registeredCount != null && event.maxAttendees > 0
+                        ? `${event.registeredCount} / ${event.maxAttendees} registered`
+                        : event.registeredCount != null
+                          ? `${event.registeredCount} registered`
+                          : 'Registration is open.'}
+                    </p>
+                    {!registration ? (
+                      event.isRegistrationOpen ? (
+                        <Button
+                          onClick={() => registerMutation.mutate()}
+                          disabled={registerMutation.isPending}
+                        >
+                          {registerMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                          )}
+                          Register Now
+                        </Button>
+                      ) : (
+                        <p className="text-muted-foreground">Registration is currently closed for this event.</p>
+                      )
+                    ) : registration.status === 'registered' || registration.status === 'checked_in' ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="font-medium text-green-600">
+                            {registration.status === 'checked_in' ? 'Checked In' : 'Registered'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" asChild>
+                            <Link href={`/student/events/${event._id}/qr`}>
+                              <QrCode className="w-4 h-4 mr-2" /> View QR Code
+                            </Link>
+                          </Button>
+                          {registration.status === 'registered' && (
+                            <Button
+                              variant="outline"
+                              className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                              onClick={() => cancelMutation.mutate()}
+                              disabled={cancelMutation.isPending}
+                            >
+                              {cancelMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <XCircle className="w-4 h-4 mr-2" />
+                              )}
+                              Cancel Registration
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ) : registration.status === 'cancelled' ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">Cancelled</Badge>
+                        </div>
+                        {event.isRegistrationOpen && (
+                          <Button
+                            onClick={() => registerMutation.mutate()}
+                            disabled={registerMutation.isPending}
+                          >
+                            {registerMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                            )}
+                            Register Again
+                          </Button>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
+                        {event.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}
+                      </Badge>
+                      {event.allowWalkIns && (
+                        <Badge variant="outline">Walk-ins Allowed</Badge>
+                      )}
+                      {event.registrationCloseAt && event.isRegistrationOpen && (
+                        <Badge variant="outline">
+                          Closes {format(new Date(event.registrationCloseAt), 'MMM dd, h:mm a')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">
+                      {event.registeredCount != null && event.maxAttendees > 0
+                        ? `${event.registeredCount} / ${event.maxAttendees} registered`
+                        : event.registeredCount != null
+                          ? `${event.registeredCount} registered`
+                          : 'Registration is open for students.'}
+                    </p>
+                    {(event.targetProgramIds && event.targetProgramIds.length > 0) ||
+                     (event.targetYearLevelIds && event.targetYearLevelIds.length > 0) ? (
+                      <p className="text-xs text-muted-foreground">
+                        This event has eligibility requirements. Sign in to check if you qualify.
+                      </p>
+                    ) : null}
+                    {event.isRegistrationOpen ? (
+                      <Link href={`/student/login?redirect=/events/${event._id}`}>
+                        <Button>
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Sign In to Register
+                        </Button>
+                      </Link>
+                    ) : (
+                      <p className="text-muted-foreground">Registration is currently closed for this event.</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

@@ -50,7 +50,6 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
   - Phase 1
   - Phase 2
 - In progress:
-  - Phase 3
   - Phase 4
   - Phase 5
   - Phase 7
@@ -87,7 +86,7 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 
 - Phase 1: Completed
 - Phase 2: Completed
-- Phase 3: In progress
+- Phase 3: Completed
 - Phase 3A: Not started
 - Phase 4: In progress
 - Phase 5: In progress
@@ -101,8 +100,8 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 
 ## Next Priority Order
 
-1. Finish Phase 3 admin and student registration UX.
-2. Finish Phase 4 scanner, attendance pages, and manual fallback UX.
+1. Finish Phase 4 scanner, attendance pages, and manual fallback UX.
+2. Finish Phase 3A event data expansion to give the new registration system richer data.
 3. Finish Phase 5 approval queue, approval history, and approver UX.
 4. Implement Phase 3A and Phase 5A so the new workflow system has richer event, news, and announcement data to operate on.
 5. Build Phase 6 and then Phase 6A so process workflows and organization/leader data evolve together.

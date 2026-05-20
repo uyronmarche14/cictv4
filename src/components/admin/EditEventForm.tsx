@@ -42,6 +42,8 @@ import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { sanitizeCoverAndGallery } from '@/lib/media';
+import { academicAPI } from '@/lib/api/academic';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const parseDateTimeLocalValue = (value: string): number => new Date(value).getTime();
 
@@ -118,6 +120,17 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
   const [gallery, setGallery] = useState<MediaAsset[]>(event.gallery ?? []);
   const [sections, setSections] = useState<ContentSection[]>(event.sections ?? []);
   const [schedule, setSchedule] = useState<EventScheduleItem[]>(event.schedule ?? []);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(event.isRegistrationOpen ?? true);
+  const [allowWalkIns, setAllowWalkIns] = useState(event.allowWalkIns ?? false);
+  const [registrationCloseAt, setRegistrationCloseAt] = useState(
+    event.registrationCloseAt ? new Date(event.registrationCloseAt).toISOString().slice(0, 16) : ''
+  );
+  const [programs, setPrograms] = useState<{ _id: string; name: string }[]>([]);
+  const [yearLevels, setYearLevels] = useState<{ _id: string; label: string }[]>([]);
+  const [academicSections, setAcademicSections] = useState<{ _id: string; displayName: string }[]>([]);
+  const [targetProgramIds, setTargetProgramIds] = useState<string[]>(event.targetProgramIds ?? []);
+  const [targetYearLevelIds, setTargetYearLevelIds] = useState<string[]>(event.targetYearLevelIds ?? []);
+  const [targetSectionIds, setTargetSectionIds] = useState<string[]>(event.targetSectionIds ?? []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -146,7 +159,23 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
       }
     };
 
+    const fetchAcademicData = async () => {
+      try {
+        const [progs, levels, secs] = await Promise.all([
+          academicAPI.getPrograms(),
+          academicAPI.getYearLevels(),
+          academicAPI.getSections(),
+        ]);
+        setPrograms(progs);
+        setYearLevels(levels);
+        setAcademicSections(secs);
+      } catch (error) {
+        console.error('Failed to fetch academic data:', error);
+      }
+    };
+
     fetchOrganizations();
+    fetchAcademicData();
   }, [open]);
 
   const availableOrganizations = useMemo(() => {
@@ -179,6 +208,9 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
     setSchedule(event.schedule ?? []);
     setOwnerType(event.ownerType);
     setOrganizationId(event.organizationId ?? '');
+    setTargetProgramIds(event.targetProgramIds ?? []);
+    setTargetYearLevelIds(event.targetYearLevelIds ?? []);
+    setTargetSectionIds(event.targetSectionIds ?? []);
   }, [event, form]);
 
   useEffect(() => {
@@ -258,6 +290,12 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
         gallery: sanitizedGallery,
         sections,
         schedule,
+        isRegistrationOpen,
+        allowWalkIns,
+        registrationCloseAt: registrationCloseAt || undefined,
+        targetProgramIds: targetProgramIds.length > 0 ? targetProgramIds : undefined,
+        targetYearLevelIds: targetYearLevelIds.length > 0 ? targetYearLevelIds : undefined,
+        targetSectionIds: targetSectionIds.length > 0 ? targetSectionIds : undefined,
       });
       toast.success('Event updated successfully');
       onOpenChange(false);
@@ -412,6 +450,127 @@ export function EditEventForm({ event, open, onOpenChange, onSuccess }: EditEven
                 )}
               />
             </div>
+            <div className="rounded-xl border p-4 space-y-4">
+              <h3 className="font-medium text-sm">Registration Settings</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="edit-isRegistrationOpen"
+                    checked={isRegistrationOpen}
+                    onChange={(e) => setIsRegistrationOpen(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor="edit-isRegistrationOpen" className="text-sm cursor-pointer">Registration Open</label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="edit-allowWalkIns"
+                    checked={allowWalkIns}
+                    onChange={(e) => setAllowWalkIns(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor="edit-allowWalkIns" className="text-sm cursor-pointer">Allow Walk-ins</label>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Registration Close</label>
+                  <Input
+                    type="datetime-local"
+                    value={registrationCloseAt}
+                    onChange={(e) => setRegistrationCloseAt(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-4">
+              <h3 className="font-medium text-sm">Target Eligibility</h3>
+              <p className="text-xs text-muted-foreground">Leave empty to allow all students to register.</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Programs</label>
+                  <ScrollArea className="h-32 rounded-md border p-2">
+                    {programs.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No programs available</p>
+                    ) : (
+                      programs.map((p) => (
+                        <label key={p._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={targetProgramIds.includes(p._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTargetProgramIds((prev) => [...prev, p._id]);
+                              } else {
+                                setTargetProgramIds((prev) => prev.filter((id) => id !== p._id));
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          {p.name}
+                        </label>
+                      ))
+                    )}
+                  </ScrollArea>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Year Levels</label>
+                  <ScrollArea className="h-32 rounded-md border p-2">
+                    {yearLevels.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No year levels available</p>
+                    ) : (
+                      yearLevels.map((yl) => (
+                        <label key={yl._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={targetYearLevelIds.includes(yl._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTargetYearLevelIds((prev) => [...prev, yl._id]);
+                              } else {
+                                setTargetYearLevelIds((prev) => prev.filter((id) => id !== yl._id));
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          {yl.label}
+                        </label>
+                      ))
+                    )}
+                  </ScrollArea>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Sections</label>
+                  <ScrollArea className="h-32 rounded-md border p-2">
+                    {academicSections.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No sections available</p>
+                    ) : (
+                      academicSections.map((s) => (
+                        <label key={s._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={targetSectionIds.includes(s._id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTargetSectionIds((prev) => [...prev, s._id]);
+                              } else {
+                                setTargetSectionIds((prev) => prev.filter((id) => id !== s._id));
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          {s.displayName}
+                        </label>
+                      ))
+                    )}
+                  </ScrollArea>
+                </div>
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="excerpt"
