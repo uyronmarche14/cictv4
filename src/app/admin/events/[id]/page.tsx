@@ -4,12 +4,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventAPI } from '@/lib/api/event';
-import { adminEventAPI, AdminRegistration } from '@/lib/api/admin-events';
+import { adminEventAPI } from '@/lib/api/admin-events';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -110,7 +110,7 @@ export default function AdminEventDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const eventId = params.id as string;
-  const { canAccessEventsModule, hasPermission, hasAnyGlobalOrScopedPermission } = usePermissions();
+  const { canAccessEventsModule, hasAnyGlobalOrScopedPermission } = usePermissions();
   const { shouldRender } = useAdminPageAccess(canAccessEventsModule());
   const [tab, setTab] = useState<Tab>('details');
 
@@ -142,7 +142,10 @@ export default function AdminEventDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
       toast.success('Registration cancelled');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to cancel'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to cancel');
+    },
   });
 
   const undoCheckInMutation = useMutation({
@@ -151,7 +154,10 @@ export default function AdminEventDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
       toast.success('Check-in undone');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to undo check-in'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to undo check-in');
+    },
   });
 
   const updateStatusMutation = useMutation({
@@ -161,7 +167,10 @@ export default function AdminEventDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
       toast.success('Status updated');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to update status'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to update status');
+    },
   });
 
   const addRegistrationMutation = useMutation({
@@ -172,7 +181,10 @@ export default function AdminEventDetailPage() {
       setAddRegStudentNo('');
       toast.success('Registration created');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to create registration'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to create registration');
+    },
   });
 
   const filteredRegistrations = useMemo(() => {

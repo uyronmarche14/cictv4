@@ -36,7 +36,10 @@ export default function StudentEventDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
       toast.success('Successfully registered!');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Registration failed'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Registration failed');
+    },
   });
 
   const cancelMutation = useMutation({
@@ -46,7 +49,10 @@ export default function StudentEventDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
       toast.success('Registration cancelled');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to cancel'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to cancel');
+    },
   });
 
   if (!event) {

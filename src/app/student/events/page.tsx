@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studentEventAPI, StudentEvent } from '@/lib/api/student';
+import { studentEventAPI } from '@/lib/api/student';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,9 +25,9 @@ export default function StudentEventsPage() {
       queryClient.invalidateQueries({ queryKey: ['student', 'events'] });
       toast.success('Successfully registered for the event!');
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || 'Failed to register';
-      toast.error(msg);
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to register');
     },
   });
 
@@ -37,9 +37,9 @@ export default function StudentEventsPage() {
       queryClient.invalidateQueries({ queryKey: ['student', 'events'] });
       toast.success('Registration cancelled');
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || 'Failed to cancel';
-      toast.error(msg);
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to cancel');
     },
   });
 

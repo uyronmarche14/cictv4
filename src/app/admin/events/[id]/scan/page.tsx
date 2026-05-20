@@ -28,7 +28,7 @@ export default function AdminScanPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const eventId = params.id as string;
-  const { canAccessEventsModule, hasAnyGlobalOrScopedPermission } = usePermissions();
+  const { canAccessEventsModule } = usePermissions();
   const { shouldRender } = useAdminPageAccess(canAccessEventsModule());
   const [studentNumber, setStudentNumber] = useState('');
   const [scanResult, setScanResult] = useState<{ result: string; studentName?: string } | null>(null);
@@ -58,7 +58,10 @@ export default function AdminScanPage() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
       toast.success('Check-in undone');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Failed to undo check-in'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to undo check-in');
+    },
   });
 
   if (!shouldRender) return null;
@@ -80,8 +83,9 @@ export default function AdminScanPage() {
       } else {
         toast.error(`Scan result: ${result.result}`);
       }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Scan failed');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Scan failed');
     } finally {
       setLoading(false);
     }

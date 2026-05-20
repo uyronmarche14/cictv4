@@ -32,7 +32,10 @@ export function EventCard({ event, registration }: EventCardProps) {
       queryClient.invalidateQueries({ queryKey: ['student', 'registrations'] });
       toast.success('Successfully registered!');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Registration failed'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Registration failed');
+    },
   });
 
   const cancelMutation = useMutation({
@@ -41,7 +44,10 @@ export function EventCard({ event, registration }: EventCardProps) {
       queryClient.invalidateQueries({ queryKey: ['student', 'registrations'] });
       toast.success('Registration cancelled');
     },
-    onError: (err: any) => toast.error(err?.response?.data?.message || 'Cancellation failed'),
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Cancellation failed');
+    },
   });
 
   const handleCardClick = () => {

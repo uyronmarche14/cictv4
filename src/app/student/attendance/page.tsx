@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { studentRegistrationAPI, AttendanceLog } from '@/lib/api/student';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { studentRegistrationAPI } from '@/lib/api/student';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableBody,
