@@ -42,12 +42,13 @@ export default function StudentQrPage() {
   }
 
   if (error || !data) {
+    const errMsg =
+      (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+      'Make sure you are registered for this event.';
     return (
       <div className="text-center py-10">
         <p className="text-red-500 mb-4">Unable to load your QR code.</p>
-        <p className="text-sm text-muted-foreground mb-4">
-          Make sure you are registered for this event.
-        </p>
+        <p className="text-sm text-muted-foreground mb-4">{errMsg}</p>
         <Button variant="outline" onClick={() => router.push('/student/events')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Events
         </Button>
